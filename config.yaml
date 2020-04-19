@@ -1,0 +1,93 @@
+---
+
+domains:
+- name: kafka.controller
+  beans:
+  - query: "type=KafkaController,name=*"
+    attributes:
+    - Value: gauge
+    metric: "${domain}_${keyprop name | snake}"
+  - query: "type=ControllerStats,name=*"
+    attributes:
+    - Count: counter
+    metric: "${domain}_${keyprop name | replace RateAndTimeMs | replace PerSec | snake}_${attribute | replace Count total}"
+- name: kafka.coordinator.group
+  beans:
+  - query: "type=GroupMetadataManager,name=*"
+    attributes:
+    - Value: gauge
+    metric: "kafka_group_coordinator_${keyprop name | snake}"
+- name: kafka.log
+  beans:
+  - query: "type=LogFlushStats,name=LogFlushRateAndTimeMs"
+    attributes:
+    - Count: counter
+    - Mean: gauge
+    metric: "kafka_log_flush_${attribute | replace Count total | replace Mean avg_time}"
+  - query: "type=Log,name=Size,topic=*,partition=*"
+    attributes:
+    - Value: gauge
+    metric: "kafka_log_partition_size"
+    labels:
+      topic: "${keyprop topic}"
+      partition: "${keyprop partition}"
+- name: kafka.network
+  beans:
+  - query: "type=Processor,name=*,networkProcessor=*"
+    attributes:
+    - Value: gauge
+    metric: "kafka_network_processor_${keyprop name | snake}"
+    labels:
+      network_processor: "${keyprop networkProcessor}"
+  - query: "type=SocketServer,name=NetworkProcessorAvgIdlePercent"
+    attributes:
+    - Value: gauge
+    metric: "kafka_${keyprop name | snake}"
+  - query: "type=RequestChannel,name=*"
+    attributes:
+    - Value: gauge
+    metric: "kafka_network_${keyprop name | snake}"
+- name: kafka.server
+  beans:
+  - query: "type=KafkaRequestHandlerPool,name=RequestHandlerAvgIdlePercent"
+    attributes:
+    - OneMinuteRate: gauge
+    metric: "kafka_${keyprop name | snake}"
+  - query: "type=BrokerTopicMetrics,name=*"
+    attributes:
+    - Count: counter
+    metric: "kafka_topics_${keyprop name | replace PerSec | replace Total | snake}_${attribute | replace Count total}"
+  - query: "type=BrokerTopicMetrics,name=*,topic=*"
+    attributes:
+    - Count: counter
+    metric: "kafka_topic_${keyprop name | replace PerSec | replace Total | snake}_${attribute | replace Count total}"
+    labels:
+      topic: "${keyprop topic}"
+  - query: "type=ReplicaManager,name=*Count"
+    attributes:
+    - Value: gauge
+    metric: "kafka_broker_${keyprop name | snake}"
+  - query: "type=ReplicaManager,name=*PerSec"
+    attributes:
+    - Count: counter
+    metric: "kafka_broker_${keyprop name | replace PerSec | snake}_${attribute | replace Count total}"
+  - query: "type=socket-server-metrics,*"
+    attributes:
+    - connection-creation-total: counter
+    - connection-close-total: counter
+    - failed-authentication-total: counter
+    - failed-reauthentication-total: counter
+    - incoming-byte-total: counter
+    - iotime-total: counter
+    - io-waittime-total: counter
+    - network-io-total: counter
+    - outgoing-byte-total: counter
+    - request-total: counter
+    - response-total: counter
+    - select-total: counter
+    - successful-authentication-total: counter
+    - successful-reauthentication-total: counter
+    metric: "${domain}_${attribute | snake}"
+    labels:
+      listener: "${keyprop listener | lower}"
+      network_processor: "${keyprop networkProcessor}"

@@ -1,0 +1,6 @@
+# Gradle project-specific cache directory
+.gradle
+
+# Gradle output directories
+bin/
+build/
