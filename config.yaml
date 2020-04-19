@@ -36,23 +36,23 @@ domains:
   - query: "type=Processor,name=*,networkProcessor=*"
     attributes:
     - Value: gauge
-    metric: "kafka_network_processor_${keyprop name | snake}"
+    metric: "kafka_broker_network_processor_${keyprop name | snake}"
     labels:
       network_processor: "${keyprop networkProcessor}"
   - query: "type=SocketServer,name=NetworkProcessorAvgIdlePercent"
     attributes:
     - Value: gauge
-    metric: "kafka_${keyprop name | snake}"
+    metric: "kafka_broker_${keyprop name | snake}"
   - query: "type=RequestChannel,name=*"
     attributes:
     - Value: gauge
-    metric: "kafka_network_${keyprop name | snake}"
+    metric: "kafka_broker_${keyprop name | snake}"
 - name: kafka.server
   beans:
   - query: "type=KafkaRequestHandlerPool,name=RequestHandlerAvgIdlePercent"
     attributes:
     - OneMinuteRate: gauge
-    metric: "kafka_${keyprop name | snake}"
+    metric: "kafka_broker_${keyprop name | snake}"
   - query: "type=BrokerTopicMetrics,name=*"
     attributes:
     - Count: counter
@@ -87,7 +87,7 @@ domains:
     - select-total: counter
     - successful-authentication-total: counter
     - successful-reauthentication-total: counter
-    metric: "${domain}_${attribute | snake}"
+    metric: "kafka_broker_${attribute | snake}"
     labels:
       listener: "${keyprop listener | lower}"
       network_processor: "${keyprop networkProcessor}"
