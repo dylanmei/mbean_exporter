@@ -17,8 +17,8 @@ class PromWriter(val host: String?, val port: Int) : Collector(), Collector.Desc
     companion object {
         val log = LoggerFactory.getLogger(PromWriter::class.java)
         val beanCollectionsSeen = Counter.build()
-          .name("bean_collections_seen_total")
-          .help("Number of times bean collections have been seen.")
+          .name("mbean_collections_seen_total")
+          .help("Number of times mbean collections have been seen.")
           .register()
     }
 

@@ -37,7 +37,7 @@ data class BeanConfig(
     @Transient
     var template: Template<Vars> = metric?.let {
             Template(VarMacroRegistry, metric)
-        } ?: Template(VarMacroRegistry, "bean")
+        } ?: Template(VarMacroRegistry, "mbean")
 }
 
 @Serializable
