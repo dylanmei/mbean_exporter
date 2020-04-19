@@ -1,4 +1,0 @@
-package exporter
-
-class Formatter {
-}
