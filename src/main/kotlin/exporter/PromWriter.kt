@@ -16,10 +16,6 @@ import org.slf4j.LoggerFactory
 class PromWriter(val host: String?, val port: Int) : Collector(), Collector.Describable, Writer {
     companion object {
         val log = LoggerFactory.getLogger(PromWriter::class.java)
-        val beanCollectionsSeen = Counter.build()
-          .name("mbean_collections_seen_total")
-          .help("Number of times mbean collections have been seen.")
-          .register()
     }
 
     val server: HTTPServer
@@ -68,7 +64,6 @@ class PromWriter(val host: String?, val port: Int) : Collector(), Collector.Desc
     override fun flush() {
         writtenSamples = mutableSamples.values.toList()
         mutableSamples.clear()
-        beanCollectionsSeen.inc()
     }
 
     override fun close() {

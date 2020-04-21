@@ -2,9 +2,14 @@ package exporter
 
 import exporter.jmx.*
 
+import io.prometheus.client.Counter
+import io.prometheus.client.Gauge
+
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.selects.select
+import kotlin.system.measureTimeMillis
 
 import sun.misc.Signal
 import sun.misc.SignalHandler
@@ -59,7 +64,7 @@ class Exporter : Runnable {
     lateinit var output: OutputOption
 
     override fun run() {
-        val collector = Collector(ConnectionFactory(host, port))
+        val collector = MBeanCollector(ConnectionFactory(host, port))
         val writer = when (output) {
             OutputOption.STDOUT -> StdoutWriter()
             OutputOption.HTTP -> PromWriter(httpHost, httpPort)
@@ -69,7 +74,7 @@ class Exporter : Runnable {
         stopExporter(collector, writer)
     }
 
-    fun runExporter(collector: Collector, writer: Writer) = runBlocking {
+    fun runExporter(collector: MBeanCollector, writer: Writer) = runBlocking {
         val tickerChannel = ticker(delayMillis = repeatDelay, initialDelayMillis = 0)
         val cancelChannel = trapSignal("INT")
 
@@ -89,55 +94,49 @@ class Exporter : Runnable {
         }
     }
 
-    fun runCollector(collector: Collector, writer: Writer) = runBlocking {
-        val beans = Channel<Bean>()
-        val timeout = queryDomains(collector, config.domains, beans)
+    fun runCollector(collector: MBeanCollector, writer: Writer) = runBlocking {
+        val queries = config.domains
+            .map { domainConfig ->
+                domainConfig.beans.map { beanConfig ->
+                    MBeanQuery(
+                        beanConfig,
+                        domainConfig.name,
+                        beanConfig.query,
+                        beanConfig.attributes.names)
+                    }
+                }.flatten()
 
-        async {
-            for (bean in beans) {
-                writer.write(bean)
-            }
+        val time = measureTimeMillis {
+            queries.asFlow()
+                .map { query -> collector.collect(query) }
+                .collect { results ->
+                    for (result in results)
+                        writer.write(result.sample())
+                }
+
             writer.flush()
         }
 
-        timeout.cancel()
+        mbeanCollectionsSeen.inc()
+        mbeanScrapeDuration.set(time.toDouble() / 1000)
+        log.debug("Collection time ${time}ms")
     }
 
-    fun CoroutineScope.queryDomains(collector: Collector, domains: List<DomainConfig>, beans: Channel<Bean>): Job {
-        val query = async {
-            domains.map { domain ->
-                domain.beans.map { bean ->
-                    collector.query(bean, Collector.Query(
-                        domain = domain.name,
-                        query = bean.query,
-                        attributes = bean.attributes.names))
-                }.forEach {
-                    for (result in it) {
-                        beans.send(result.sample())
-                    }
-                }
-            }
-        }
-
-        query.invokeOnCompletion { beans.close() }
-
-        val timeout = launch {
-            delay(maxTimeout)
-            log.warn("Cancelling remaining JMX queries: ${maxTimeout}ms time to wait has been exceeded.")
-            query.cancel()
-            beans.close()
-        }
-
-        return timeout
-    }
-
-    fun stopExporter(collector: Collector, writer: Writer) {
+    fun stopExporter(collector: MBeanCollector, writer: Writer) {
         collector.close()
         writer.close()
     }
 
     companion object {
         val log = LoggerFactory.getLogger(Exporter::class.java)
+        val mbeanCollectionsSeen = Counter.build()
+          .name("mbean_collections_seen_total")
+          .help("Number of times mbean collections have been seen.")
+          .register()
+        val mbeanScrapeDuration = Gauge.build()
+          .name("mbean_scrape_duration_seconds")
+          .help("Time this MBean scrape took, in seconds.")
+          .register()
 
         @JvmStatic
         fun main(args: Array<String>) {

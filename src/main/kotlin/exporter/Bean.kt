@@ -1,6 +1,6 @@
 package exporter
 
-import exporter.jmx.*
+import exporter.jmx.MBeanResult
 import exporter.text.Vars
 
 import com.glispa.combo.Template
@@ -26,7 +26,7 @@ data class Bean(
     }
 }
 
-fun Collector.Result.sample(): Bean {
+fun MBeanResult.sample(): Bean {
     val attrs = this.attributes.map {
         val value = it.value as Number? ?: 0
         it.name to value.toDouble()
@@ -34,7 +34,7 @@ fun Collector.Result.sample(): Bean {
 
     return Bean(
         this.query.domain,
-        this.context as BeanConfig,
+        this.query.context as BeanConfig,
         this.objectName.getKeyPropertyList().toMap(),
         attrs.toMap())
 }

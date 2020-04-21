@@ -26,6 +26,6 @@ class StdoutWriter() : Writer {
         }
     }
 
-    override fun flush() {}
-    override fun close() {}
+    override fun flush() { }
+    override fun close() { }
 }
