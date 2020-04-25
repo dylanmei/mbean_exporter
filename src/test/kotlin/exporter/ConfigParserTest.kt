@@ -31,6 +31,7 @@ class ConfigParserTest : ShouldSpec() {
               - query: type=bar
                 attributes:
                 - Value: counter
+                metric: foo_bar_total
                 labels:
                   hello: world
             """.trimIndent())
@@ -43,6 +44,7 @@ class ConfigParserTest : ShouldSpec() {
 
                 with (beans.first()) {
                     query shouldBe("type=bar")
+                    metric shouldBe("foo_bar_total")
 
                     labels shouldNotBe(null)
                     labels!! shouldContainKey("hello")
@@ -51,6 +53,33 @@ class ConfigParserTest : ShouldSpec() {
                     with (attributes.first()) {
                         name shouldBe("Value")
                         type shouldBe(AttributeType.COUNTER)
+                    }
+                }
+            }
+        }
+
+        // TODO: Not implemented
+        should("parse untyped attribute").config(enabled = false) {
+            val config = ConfigParser().parse("""
+            domains:
+            - name: foo
+              beans:
+              - query: type=bar
+                attributes:
+                - Value
+                metric: foo_bar_total
+            """.trimMargin())
+
+            config.domains shouldHaveSize(1)
+            with (config.domains.first()) {
+                beans shouldHaveSize(1)
+
+                with (beans.first()) {
+                    attributes shouldHaveSize(1)
+
+                    with (attributes.first()) {
+                        name shouldBe("Value")
+                        type shouldBe(AttributeType.UNTYPED)
                     }
                 }
             }

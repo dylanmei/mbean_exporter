@@ -77,6 +77,7 @@ data class AttributeConfig(val name: String, val type: AttributeType)
 
 @Serializable
 enum class AttributeType {
+    @SerialName("untyped") UNTYPED,
     @SerialName("gauge") GAUGE,
     @SerialName("counter") COUNTER;
 }

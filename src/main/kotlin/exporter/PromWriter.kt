@@ -43,6 +43,7 @@ class PromWriter(val host: String?, val port: Int) : Collector(), Collector.Desc
             val metricType = when(it.type) {
                 AttributeType.COUNTER -> Collector.Type.COUNTER
                 AttributeType.GAUGE -> Collector.Type.GAUGE
+                else -> Collector.Type.UNTYPED
             }
 
             writeSample(Sample(metric, labelNames.toList(), labelValues, value), metricType, helpString)
