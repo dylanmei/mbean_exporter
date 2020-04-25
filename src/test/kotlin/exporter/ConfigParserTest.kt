@@ -58,6 +58,43 @@ class ConfigParserTest : ShouldSpec() {
             }
         }
 
+        should("parse composite attributes") {
+            val config = ConfigParser().parse("""
+            domains:
+            - name: foo
+              beans:
+              - query: type=bar
+                attributes:
+                - Value.item1: gauge
+                - Value.item2: counter
+                metric: foo_bar_total
+            """.trimMargin())
+
+            config.domains shouldHaveSize(1)
+            with (config.domains.first()) {
+                beans shouldHaveSize(1)
+
+                with (beans.first()) {
+                    attributes shouldHaveSize(1)
+
+                    with (attributes.first()) {
+                        name shouldBe("Value")
+                        type shouldBe(AttributeType.COMPOSITE)
+
+                        items shouldHaveSize(2)
+                        with (items.first()) {
+                            name shouldBe("item1")
+                            type shouldBe(AttributeType.GAUGE)
+                        }
+                        with (items.last()) {
+                            name shouldBe("item2")
+                            type shouldBe(AttributeType.COUNTER)
+                        }
+                    }
+                }
+            }
+        }
+
         // TODO: Not implemented
         should("parse untyped attribute").config(enabled = false) {
             val config = ConfigParser().parse("""

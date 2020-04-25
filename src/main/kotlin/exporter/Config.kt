@@ -61,25 +61,46 @@ class AttributesConfig(
 
         @ImplicitReflectionSerializer
         override fun deserialize(decoder: Decoder): AttributesConfig {
-            val encodedSet = innerSerializer.deserialize(decoder)
-            val deserializedSet = encodedSet.map {
-                AttributeConfig(it.key, AttributeType.valueOf(it.value.toUpperCase()))
-            }.toSet()
+            val configs = HashMap<String, MutableList<AttributeConfig>>()
+            innerSerializer.deserialize(decoder)
+                .forEach { (name, type) ->
+                    val segments = name.split(".", limit = 2)
+                    if (segments.size == 1) {
+                        configs[name] = mutableListOf(AttributeConfig(name, AttributeType.valueOf(type.toUpperCase())))
+                    } else {
+                        val (attrName, itemName) = segments
 
-            return AttributesConfig(deserializedSet)
+                        var list = configs[attrName]
+                        if (list == null) {
+                            list = mutableListOf<AttributeConfig>()
+                            configs[attrName] = list
+                        }
+
+                        list.add(AttributeConfig(itemName, AttributeType.valueOf(type.toUpperCase())))
+                    }
+                }
+
+            return AttributesConfig(
+                configs.map { (name, items) ->
+                    if (items.size == 1) {
+                        AttributeConfig(name, items.first().type)
+                    } else {
+                        AttributeConfig(name, AttributeType.COMPOSITE, items.toSet())
+                    }
+                }.toSet())
         }
     }
-
 }
 
 @Serializable
-data class AttributeConfig(val name: String, val type: AttributeType)
+data class AttributeConfig(val name: String, val type: AttributeType, val items: Set<AttributeConfig> = emptySet())
 
 @Serializable
 enum class AttributeType {
     @SerialName("untyped") UNTYPED,
     @SerialName("gauge") GAUGE,
-    @SerialName("counter") COUNTER;
+    @SerialName("counter") COUNTER,
+    COMPOSITE;
 }
 
 @Serializable

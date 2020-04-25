@@ -18,6 +18,6 @@ class OutputOptionConverter: CommandLine.ITypeConverter<OutputOption> {
             return selectedOption
         }
 
-        throw java.lang.Exception("Could not recognize '$option' output option")
+        throw Exception("Could not recognize '$option' output option")
     }
 }

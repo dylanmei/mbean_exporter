@@ -64,7 +64,8 @@ class Exporter : Runnable {
     lateinit var output: OutputOption
 
     override fun run() {
-        val collector = MBeanCollector(ConnectionFactory(host, port))
+        val connector = MBeanConnector(host, port)
+        val collector = MBeanCollector(connector)
         val writer = when (output) {
             OutputOption.STDOUT -> StdoutWriter()
             OutputOption.HTTP -> PromWriter(httpHost, httpPort)
@@ -98,20 +99,17 @@ class Exporter : Runnable {
         val queries = config.domains
             .map { domainConfig ->
                 domainConfig.beans.map { beanConfig ->
-                    MBeanQuery(
-                        beanConfig,
-                        domainConfig.name,
-                        beanConfig.query,
-                        beanConfig.attributes.names)
-                    }
-                }.flatten()
+                    val attributesConfig = beanConfig.attributes
+                    val attributeNames = attributesConfig.map { it.name }.toSet()
+                    MBeanQuery(beanConfig, domainConfig.name, beanConfig.query, attributeNames)
+                }
+            }.flatten()
 
         val time = measureTimeMillis {
             queries.asFlow()
                 .map { query -> collector.collect(query) }
                 .collect { results ->
-                    for (result in results)
-                        writer.write(result.sample())
+                    for (result in results) writer.write(result)
                 }
 
             writer.flush()
@@ -119,7 +117,7 @@ class Exporter : Runnable {
 
         mbeanCollectionsSeen.inc()
         mbeanScrapeDuration.set(time.toDouble() / 1000)
-        log.debug("Collection time ${time}ms")
+        log.debug("Collection time {}ms", time)
     }
 
     fun stopExporter(collector: MBeanCollector, writer: Writer) {

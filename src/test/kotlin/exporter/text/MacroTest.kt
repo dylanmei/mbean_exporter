@@ -50,6 +50,14 @@ class MacroTest : ShouldSpec() {
         should("format remove var") {
             Template(VarMacroRegistry, "\${keyprop region | replace Plateau}").render(vars) shouldBe "Fraijanes "
         }
+
+        should("format leftof var") {
+            Template(VarMacroRegistry, "\${keyprop region | leftof}").render(vars) shouldBe "Fraijanes"
+        }
+
+        should("format rightof var") {
+            Template(VarMacroRegistry, "\${keyprop region | rightof}").render(vars) shouldBe "Plateau"
+        }
     }
 }
 

@@ -1,6 +1,61 @@
 ---
 
 domains:
+#
+# Approximate the metric format of io.prometheus.simpleclient_hotspot
+#
+- name: java.lang
+  beans:
+  - query: type=Memory
+    attributes:
+    - HeapMemoryUsage.committed: gauge
+    - HeapMemoryUsage.used: gauge
+    - HeapMemoryUsage.max: gauge
+    - HeapMemoryUsage.init: gauge
+    - NonHeapMemoryUsage.committed: gauge
+    - NonHeapMemoryUsage.used: gauge
+    - NonHeapMemoryUsage.max: gauge
+    - NonHeapMemoryUsage.init: gauge
+    metric: "jvm_memory_bytes_${attribute | rightof .}"
+    labels:
+      area: "${attribute | leftof Memory | lower}"
+  - query: type=MemoryPool,name=*
+    attributes:
+    - Usage.committed: gauge
+    - Usage.used: gauge
+    - Usage.max: gauge
+    - Usage.init: gauge
+    - NonHeapMemoryUsage.committed: gauge
+    - NonHeapMemoryUsage.used: gauge
+    - NonHeapMemoryUsage.max: gauge
+    - NonHeapMemoryUsage.init: gauge
+    metric: "jvm_memory_pool_${attribute | rightof .}"
+    labels:
+      pool: "${keyprop name}"
+  - query: type=ClassLoading
+    attributes:
+    - LoadedClassCount: gauge
+    - TotalLoadedClassCount: counter
+    - UnloadedClassCount: counter
+    metric: "jvm_classes_${attribute | replace ClassCount | replace TotalLoaded loaded_total | replace Unloaded unloaded_total | lower}"
+  - query: type=Threading
+    attributes:
+    - ThreadCount: gauge
+    - DaemonThreadCount: gauge
+    - PeakThreadCount: gauge
+    - TotalStartedThreadCount: counter
+    metric: "jvm_threads_${attribute | replace Thread | replace DaemonCount daemon | replace PeakCount peak | replace TotalStartedCount started_total | replace Count current}"
+  - query: type=GarbageCollector,name=*
+    attributes:
+    - CollectionCount: counter
+    - CollectionTime: counter
+    metric: "jvm_gc_collection_seconds_${attribute | replace Collection | replace Time sum | lower}"
+    labels:
+      gc: "${keyprop name}"
+
+#
+# Kafka broker metrics
+#
 - name: kafka.controller
   beans:
   - query: "type=KafkaController,name=*"
@@ -91,3 +146,4 @@ domains:
     labels:
       listener: "${keyprop listener | lower}"
       network_processor: "${keyprop networkProcessor}"
+

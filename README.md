@@ -20,7 +20,8 @@ rules:
 You can be doing this ヾ(＠⌒ー⌒＠)ノ
 
 ```
-domains: kafka.log
+domains:
+- name: kafka.log
   beans:
   - query: "type=Log,name=Size,topic=*,partition=*"
     attributes:
@@ -29,13 +30,14 @@ domains: kafka.log
     labels:
       topic: "${keyprop topic | lower}"
       partition: "${keyprop partition}"
-  - query: "type=LogCleanerManager,name=time-since-last-run-ms"
+- name: kafka.server
+  beans:
+  - query: "type=KafkaRequestHandlerPool,name=RequestHandlerAvgIdlePercent"
     attributes:
-    - Value: gauge
-    metric: "kafka_${keyprop type | snake}_${keyprop name | snake}
-  - query: "type=LogFlushStats,name=LogFlushRateAndTimeMs"
+    - OneMinuteRate: gauge
+    metric: "kafka_broker_${keyprop name | snake}"
+  - query: "type=BrokerTopicMetrics,name=*"
     attributes:
-    - Mean: gauge
     - Count: counter
-    metric: "kafka_log_flush_${attribute | replace Count total | replace Mean avg_time}"
+    metric: "kafka_topics_${keyprop name | replace PerSec | replace Total | snake}_${attribute | replace Count total}"
 ```

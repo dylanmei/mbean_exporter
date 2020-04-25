@@ -12,6 +12,8 @@ object VarMacroRegistry: MacroRegistry<Vars>() {
         register("upper", { _ -> UpperCaseMacro() })
         register("snake", { _ -> SnakeCaseMacro() })
         register("replace", { args -> ReplaceMacro(args) })
+        register("leftof", { args -> LeftOfMacro(args.firstOrNull() ?: "") })
+        register("rightof", { args -> RightOfMacro(args.firstOrNull() ?: "") })
     }
 }
 

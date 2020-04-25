@@ -7,7 +7,7 @@ import javax.management.remote.JMXConnectorFactory
 import javax.management.remote.JMXServiceURL
 import javax.rmi.ssl.SslRMIClientSocketFactory
 
-class ConnectionFactory(
+class MBeanConnector(
     host: String,
     port: Int,
     username: String? = null,
@@ -22,10 +22,10 @@ class ConnectionFactory(
         }
 
         connector = JMXConnectorFactory.connect(
-            JMXServiceURL("service:jmx:rmi:///jndi/rmi://$host:$port/jmxrmi"), environment)
+            JMXServiceURL("service:jmx:rmi:///jndi/rmi://${host}:${port}/jmxrmi"), environment)
     }
 
-    fun get(): MBeanServerConnection {
+    fun conn(): MBeanServerConnection {
         return connector.mBeanServerConnection
     }
 
