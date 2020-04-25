@@ -22,21 +22,38 @@ class MBeanCollector(val connection: ConnectionFactory) {
         log.debug("Querying for {}", nameString)
 
         val mbeans = queryObjects(objectName)
-        val results = mbeans.map { mbean ->
-          val attributes = queryAttributes(mbean.objectName, query.attributes)
-          MBeanResult(query, mbean.objectName, attributes)
-        }
+        val results = mbeans
+            .map { mbean -> collectObject(query, mbean.objectName, query.attributes) }
+            .filter { it.attributes.size > 0 }
 
         log.debug("Query found {} results for {}", results.size, nameString)
-
         return results
     }
 
     fun close() = connection.close()
 
+    private fun collectObject(query: MBeanQuery, objectName: ObjectName, attributeNames: Set<String>): MBeanResult {
+        log.debug("Query attributes for {}", objectName)
+
+        val attributes = queryAttributes(objectName, attributeNames)
+        return MBeanResult(query, objectName, attributes)
+    }
+
     private fun queryObjects(name: ObjectName): Set<ObjectInstance> =
         connection.get().queryMBeans(name, null)
 
-    private fun queryAttributes(name: ObjectName, attributes: Set<String>): List<Attribute> =
-        connection.get().getAttributes(name, attributes.toTypedArray()).asList()
+    private fun queryAttributes(objectName: ObjectName, attributeNames: Set<String>): List<Attribute> {
+        val conn = connection.get()
+        val availableNames = conn
+            .getMBeanInfo(objectName)
+            .getAttributes()
+            .filter { it.isReadable() && attributeNames.contains(it.name) }
+            .map { it.name }
+
+        if (availableNames.isEmpty()) {
+            return emptyList()
+        }
+
+        return conn.getAttributes(objectName, availableNames.toTypedArray()).asList()
+    }
 }
