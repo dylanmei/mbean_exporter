@@ -25,11 +25,7 @@ domains:
     - Usage.used: gauge
     - Usage.max: gauge
     - Usage.init: gauge
-    - NonHeapMemoryUsage.committed: gauge
-    - NonHeapMemoryUsage.used: gauge
-    - NonHeapMemoryUsage.max: gauge
-    - NonHeapMemoryUsage.init: gauge
-    metric: "jvm_memory_pool_${attribute | rightof .}"
+    metric: "jvm_memory_pool_bytes_${attribute | rightof .}"
     labels:
       pool: "${keyprop name}"
   - query: type=ClassLoading
@@ -37,7 +33,7 @@ domains:
     - LoadedClassCount: gauge
     - TotalLoadedClassCount: counter
     - UnloadedClassCount: counter
-    metric: "jvm_classes_${attribute | replace ClassCount | replace TotalLoaded loaded_total | replace Unloaded unloaded_total | lower}"
+    metric: "jvm_classes_${attribute | replace TotalLoadedClassCount loaded_total | replace UnloadedClassCount unloaded_total | replace LoadedClassCount loaded}"
   - query: type=Threading
     attributes:
     - ThreadCount: gauge
@@ -122,6 +118,10 @@ domains:
     attributes:
     - Value: gauge
     metric: "kafka_broker_${keyprop name | snake}"
+  - query: "type=ReplicaManager,name=UnderReplicatedPartitions"
+    attributes:
+    - Value: gauge
+    metric: "kafka_broker_under_replicated_partition_count"
   - query: "type=ReplicaManager,name=*PerSec"
     attributes:
     - Count: counter
