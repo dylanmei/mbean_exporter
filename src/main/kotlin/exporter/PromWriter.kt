@@ -29,45 +29,11 @@ class PromWriter(val host: String?, val port: Int) : Collector(), Collector.Desc
         server = HTTPServer(InetSocketAddress(port), CollectorRegistry.defaultRegistry, true)
     }
 
-    override fun write(bean: MBean) {
-        for (attribute in bean.attributes) {
-            when (attribute) {
-                is Simple -> write(bean, attribute)
-                is Composite -> write(bean, attribute)
-            }
-        }
-    }
-
-    fun write(bean: MBean, attribute: Simple) {
-        val attributeConfig = bean.config.attributes.find {
-            it.name == attribute.name
-        } ?: throw RuntimeException("Unknown attribute ${bean.domain}${bean.query}{${attribute.name}}")
-
-        val vars = Vars(bean.domain, bean.keyProperties, attribute.name)
-        write(bean, vars, attributeConfig.type, attribute.value)
-    }
-
-    fun write(bean: MBean, attribute: Composite) {
-        val attributeConfig = bean.config.attributes.find {
-            it.name == attribute.name
-        } ?: throw RuntimeException("Unknown attribute ${bean.domain}${bean.query}{${attribute.name}}")
-
-        attribute.items.forEach { item ->
-            val attributeName = attribute.name + "." + item.name
-            val itemConfig = attributeConfig.items.find {
-                it.name == item.name
-            } ?: throw RuntimeException("Unknown attribute ${bean.domain}${bean.query}{${attributeName}}")
-
-            val vars = Vars(bean.domain, bean.keyProperties, attribute.name + "." + item.name)
-            write(bean, vars, itemConfig.type, item.value)
-        }
-    }
-
-    fun write(bean: MBean, vars: Vars, type: AttributeType, value: Double) {
-        val beanConfig = bean.config
-        val helpString = "${bean.domain}:${beanConfig.query} ${vars.attribute}"
-        val labelNames = bean.labels?.keys ?: emptyList<String>()
-        val labelValues = labelNames.map { bean.renderLabel(it, vars)}
+    override fun write(beanConfig: BeanConfig, vars: Vars, type: AttributeType, value: Double) {
+        val helpString = "${vars.domain} ${vars.keyPropString} ${vars.attribute}"
+        val metricString = beanConfig.template
+            .render(vars)
+            .replace('.', '_')
 
         val metricType = when(type) {
             AttributeType.COUNTER -> Collector.Type.COUNTER
@@ -75,7 +41,10 @@ class PromWriter(val host: String?, val port: Int) : Collector(), Collector.Desc
             else -> Collector.Type.UNTYPED
         }
 
-        writeSample(Sample(bean.renderMetric(vars), labelNames.toList(), labelValues, value), metricType, helpString)
+        val labelNames = beanConfig.labels?.keys ?: emptyList<String>()
+        val labelValues = labelNames.map { beanConfig.renderLabel(it, vars) }
+
+        writeSample(Sample(metricString, labelNames.toList(), labelValues, value), metricType, helpString)
     }
 
     fun writeSample(sample: Sample, type: Type, help: String) {

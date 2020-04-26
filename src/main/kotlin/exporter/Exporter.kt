@@ -1,6 +1,7 @@
 package exporter
 
 import exporter.jmx.*
+import exporter.text.Vars
 
 import io.prometheus.client.Counter
 import io.prometheus.client.Gauge
@@ -109,7 +110,7 @@ class Exporter : Runnable {
             queries.asFlow()
                 .map { query -> collector.collect(query) }
                 .collect { results ->
-                    for (result in results) writer.write(result)
+                    for (result in results) writeBean(writer, result)
                 }
 
             writer.flush()
@@ -118,6 +119,41 @@ class Exporter : Runnable {
         mbeanCollectionsSeen.inc()
         mbeanScrapeDuration.set(time.toDouble() / 1000)
         log.debug("Collection time {}ms", time)
+    }
+
+    fun writeBean(writer: Writer, bean: MBean) {
+        for (attribute in bean.attributes) {
+            when (attribute) {
+                is Simple -> writeSimpleBean(writer, bean, attribute)
+                is Composite -> writeCompositeBean(writer, bean, attribute)
+            }
+        }
+    }
+
+    fun writeSimpleBean(writer: Writer, bean: MBean, attribute: Simple) {
+        val beanConfig = bean.query.context as BeanConfig
+        val attributeConfig = beanConfig.attributes.find {
+            it.name == attribute.name
+        } ?: throw RuntimeException("Unknown attribute ${bean.domain}${beanConfig.query} ${attribute.name}")
+
+        val vars = Vars(bean.domain, bean.keyProperties, attribute.name)
+        writer.write(beanConfig, vars, attributeConfig.type, attribute.value)
+    }
+
+    fun writeCompositeBean(writer: Writer, bean: MBean, attribute: Composite) {
+        val beanConfig = bean.query.context as BeanConfig
+        val attributeConfig = beanConfig.attributes.find {
+            it.name == attribute.name
+        } ?: throw RuntimeException("Unknown attribute ${bean.domain}:${beanConfig.query} ${attribute.name}")
+
+        attributeConfig.items.forEach { itemConfig ->
+            attribute.items.find { item ->
+                itemConfig.name == item.name
+            }?.run {
+                val vars = Vars(bean.domain, bean.keyProperties, attribute.name + "." + name)
+                writer.write(beanConfig, vars, itemConfig.type, value)
+            }
+        }
     }
 
     fun stopExporter(collector: MBeanCollector, writer: Writer) {

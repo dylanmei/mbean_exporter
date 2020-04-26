@@ -6,43 +6,19 @@ import exporter.text.Vars
 import java.io.Closeable
 
 interface Writer : Closeable {
-    fun write(bean: MBean)
+    fun write(beanConfig: BeanConfig, vars: Vars, type: AttributeType, value: Double)
     fun flush()
 }
 
 class StdoutWriter() : Writer {
-    override fun write(bean: MBean) {
-        for (attribute in bean.attributes) {
-            when (attribute) {
-                is Simple -> write(bean, attribute)
-                is Composite -> write(bean, attribute)
-            }
-        }
-    }
+    override fun write(beanConfig: BeanConfig, vars: Vars, type: AttributeType, value: Double) {
+        val prefixString = "domain: ${vars.domain}, keyprops: ${vars.keyPropString}, attribute: ${vars.attribute}, ${type}: "
+        val metricString = beanConfig.renderMetric(vars)
+        val labelsString = beanConfig.labels?.map {
+            it.key + '=' + beanConfig.renderLabel(it.value.name, vars)
+        }?.joinToString(",") ?: ""
 
-    fun write(bean: MBean, attribute: Simple) {
-        val vars = Vars(bean.domain, bean.keyProperties, attribute.name)
-        write(bean, vars, attribute.value)
-    }
-
-    fun write(bean: MBean, attribute: Composite) {
-        attribute.items.forEach {
-            val vars = Vars(bean.domain, bean.keyProperties, attribute.name + "." + it.name)
-            write(bean, vars, it.value)
-        }
-    }
-
-    fun write(bean: MBean, vars: Vars, value: Double) {
-        val labels = bean.labels?.map {
-            it.key + '=' + bean.renderLabel(it.value.name, vars)
-        } ?: emptyList<String>()
-        val metric = bean.renderMetric(vars) + "{${labels.joinToString(",")}}"
-
-        println(
-            "domain: ${vars.domain}, " +
-            "keyprops: ${vars.keyPropString}, " +
-            "attribute: ${vars.attribute}, " +
-            "metric: ${metric} ${value}")
+        println("${prefixString}${metricString}{${labelsString}} ${value}")
     }
 
     override fun flush() { }
