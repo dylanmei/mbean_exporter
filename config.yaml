@@ -98,6 +98,23 @@ domains:
     attributes:
     - Value: gauge
     metric: "kafka_broker_${keyprop name | snake}"
+  - query: "type=RequestMetrics,name=RequestsPerSec,request=*,version=*"
+    attributes:
+    - Count: counter
+    metric: "kafka_broker_api_requests_total"
+    labels:
+      request: "${keyprop request}"
+      version: "${keyprop version}"
+  - query: "type=RequestMetrics,name=*TimeMs,request=*"
+    attributes:
+    - 50thPercentile: gauge
+    - 95thPercentile: gauge
+    - 99thPercentile: gauge
+    - 999thPercentile: gauge
+    metric: "kafka_broker_api_${keyprop name | snake}"
+    labels:
+      request: "${keyprop request}"
+      p: "${attribute | replace thPercentile}"
 - name: kafka.server
   beans:
   - query: "type=KafkaRequestHandlerPool,name=RequestHandlerAvgIdlePercent"
