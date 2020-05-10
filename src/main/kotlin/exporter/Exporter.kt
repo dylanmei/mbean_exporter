@@ -15,10 +15,9 @@ import kotlin.system.measureTimeMillis
 import sun.misc.Signal
 import sun.misc.SignalHandler
 
-import java.io.File
-
 import picocli.CommandLine
 import org.slf4j.LoggerFactory
+import kotlin.system.exitProcess
 
 @CommandLine.Command(name = "mbean_exporter")
 class Exporter : Runnable {
@@ -43,11 +42,6 @@ class Exporter : Runnable {
     var httpPort: Int = 1234
 
     @CommandLine.Option(
-        names = ["--jmx.timeout.ms"],
-        description = ["Time to wait before cancelling JMX queries"])
-    var maxTimeout: Long = 60000L
-
-    @CommandLine.Option(
         names = ["--repeat.ms"],
         description = ["Duration between iterations; otherwise run once and exit"])
     var repeatDelay: Long = 0
@@ -65,15 +59,26 @@ class Exporter : Runnable {
     lateinit var output: OutputOption
 
     override fun run() {
-        val connector = MBeanConnector(host, port)
-        val collector = MBeanCollector(connector)
+        val collector = openCollector()
         val writer = when (output) {
             OutputOption.STDOUT -> StdoutWriter()
             OutputOption.HTTP -> PromWriter(httpHost, httpPort)
         }
 
         runExporter(collector, writer)
-        stopExporter(collector, writer)
+        collector.close()
+        writer.close()
+    }
+
+    fun openCollector() = runBlocking {
+        val connector = try {
+            MBeanConnector(host, port)
+        } catch (e: MBeanConnectorException) {
+            System.err.println(e.localizedMessage)
+            exitProcess(1)
+        }
+
+        MBeanCollector(connector)
     }
 
     fun runExporter(collector: MBeanCollector, writer: Writer) = runBlocking {
@@ -84,7 +89,7 @@ class Exporter : Runnable {
         var continuing = true
 
         while (continuing) {
-            continuing = select<Boolean> {
+            continuing = select {
                 cancelChannel.onReceive {
                     false
                 }
@@ -154,11 +159,6 @@ class Exporter : Runnable {
                 writer.write(beanConfig, vars, itemConfig.type, value)
             }
         }
-    }
-
-    fun stopExporter(collector: MBeanCollector, writer: Writer) {
-        collector.close()
-        writer.close()
     }
 
     companion object {

@@ -1,11 +1,15 @@
 package exporter.jmx
 
-import java.util.*
-import javax.management.MBeanServerConnection
 import javax.management.remote.JMXConnector
 import javax.management.remote.JMXConnectorFactory
 import javax.management.remote.JMXServiceURL
-import javax.rmi.ssl.SslRMIClientSocketFactory
+
+import javax.management.AttributeList
+import javax.management.MBeanInfo
+import javax.management.ObjectInstance
+import javax.management.ObjectName
+
+import java.io.IOException
 
 class MBeanConnector(
     host: String,
@@ -21,13 +25,29 @@ class MBeanConnector(
             environment[JMXConnector.CREDENTIALS] = arrayOf(username, password)
         }
 
-        connector = JMXConnectorFactory.connect(
-            JMXServiceURL("service:jmx:rmi:///jndi/rmi://${host}:${port}/jmxrmi"), environment)
+        connector = open(host, port)
     }
 
-    fun conn(): MBeanServerConnection {
-        return connector.mBeanServerConnection
+    fun open(host: String, port: Int): JMXConnector = try {
+        val url = JMXServiceURL("service:jmx:rmi:///jndi/rmi://${host}:${port}/jmxrmi")
+        JMXConnectorFactory.connect(url, environment)
+    } catch (ioe: IOException) {
+        when (ioe.cause) {
+            is javax.naming.ServiceUnavailableException ->
+                throw MBeanConnectorException("Could not connect to JMX service at ${host}:${port}", ioe.cause)
+            else ->
+                throw MBeanConnectorException("Could not open JMX connector: ${ioe.localizedMessage}", ioe)
+        }
     }
+
+    fun queryMBeans(name: ObjectName): MutableSet<ObjectInstance> =
+        connector.mBeanServerConnection.queryMBeans(name, null)
+
+    fun getMBeanInfo(name: ObjectName): MBeanInfo =
+        connector.mBeanServerConnection.getMBeanInfo(name)
+
+    fun getAttributes(name: ObjectName, attributeNames: List<String>): AttributeList =
+        connector.mBeanServerConnection.getAttributes(name, attributeNames.toTypedArray())
 
     override fun close() {
         connector.close()
