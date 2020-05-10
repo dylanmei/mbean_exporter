@@ -15,10 +15,9 @@ import kotlin.system.measureTimeMillis
 import sun.misc.Signal
 import sun.misc.SignalHandler
 
-import java.io.File
-
 import picocli.CommandLine
 import org.slf4j.LoggerFactory
+import kotlin.system.exitProcess
 
 @CommandLine.Command(name = "mbean_exporter")
 class Exporter : Runnable {
@@ -43,11 +42,6 @@ class Exporter : Runnable {
     var httpPort: Int = 1234
 
     @CommandLine.Option(
-        names = ["--jmx.timeout.ms"],
-        description = ["Time to wait before cancelling JMX queries"])
-    var maxTimeout: Long = 60000L
-
-    @CommandLine.Option(
         names = ["--repeat.ms"],
         description = ["Duration between iterations; otherwise run once and exit"])
     var repeatDelay: Long = 0
@@ -65,15 +59,26 @@ class Exporter : Runnable {
     lateinit var output: OutputOption
 
     override fun run() {
-        val connector = MBeanConnector(host, port)
-        val collector = MBeanCollector(connector)
+        val collector = openCollector()
         val writer = when (output) {
             OutputOption.STDOUT -> StdoutWriter()
             OutputOption.HTTP -> PromWriter(httpHost, httpPort)
         }
 
         runExporter(collector, writer)
-        stopExporter(collector, writer)
+        collector.close()
+        writer.close()
+    }
+
+    fun openCollector() = runBlocking {
+        val connector = try {
+            MBeanConnector(host, port)
+        } catch (e: MBeanConnectorException) {
+            log.error(e.localizedMessage)
+            exitProcess(1)
+        }
+
+        MBeanCollector(connector)
     }
 
     fun runExporter(collector: MBeanCollector, writer: Writer) = runBlocking {
@@ -84,7 +89,7 @@ class Exporter : Runnable {
         var continuing = true
 
         while (continuing) {
-            continuing = select<Boolean> {
+            continuing = select {
                 cancelChannel.onReceive {
                     false
                 }
@@ -107,16 +112,23 @@ class Exporter : Runnable {
             }.flatten()
 
         val time = measureTimeMillis {
-            queries.asFlow()
-                .map { query -> collector.collect(query) }
-                .collect { results ->
-                    for (result in results) writeBean(writer, result)
-                }
+            try {
+                queries.asFlow()
+                    .map { query -> collector.collect(query) }
+                    .collect { results ->
+                        for (result in results) writeBean(writer, result)
+                    }
 
-            writer.flush()
+                writer.flush()
+                mbeanCollectionsSeen.inc()
+                mbeanConnectionUp.set(1.0)
+            }
+            catch (e: MBeanConnectorException) {
+                log.error(e.localizedMessage)
+                mbeanConnectionUp.set(0.0)
+            }
         }
 
-        mbeanCollectionsSeen.inc()
         mbeanScrapeDuration.set(time.toDouble() / 1000)
         log.debug("Collection time {}ms", time)
     }
@@ -156,21 +168,20 @@ class Exporter : Runnable {
         }
     }
 
-    fun stopExporter(collector: MBeanCollector, writer: Writer) {
-        collector.close()
-        writer.close()
-    }
-
     companion object {
-        val log = LoggerFactory.getLogger(Exporter::class.java)
+        val log = LoggerFactory.getLogger(Exporter::class.java)!!
+        val mbeanConnectionUp = Gauge.build()
+            .name("mbean_up")
+            .help("Whether the mbean connection is up (1) or down (0).")
+            .register()!!
         val mbeanCollectionsSeen = Counter.build()
-          .name("mbean_collections_seen_total")
-          .help("Number of times mbean collections have been seen.")
-          .register()
+            .name("mbean_collections_seen_total")
+            .help("Number of times mbean collections have been seen.")
+            .register()!!
         val mbeanScrapeDuration = Gauge.build()
-          .name("mbean_scrape_duration_seconds")
-          .help("Time this MBean scrape took, in seconds.")
-          .register()
+            .name("mbean_scrape_duration_seconds")
+            .help("Time this MBean scrape took, in seconds.")
+            .register()!!
 
         @JvmStatic
         fun main(args: Array<String>) {

@@ -1,14 +1,8 @@
 package exporter.jmx
 
-import kotlinx.coroutines.*
-import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.channels.ReceiveChannel
-
 import javax.management.Attribute
-import javax.management.MBeanAttributeInfo
 import javax.management.ObjectInstance
 import javax.management.ObjectName
-import javax.management.openmbean.CompositeType
 import javax.management.openmbean.CompositeData
 
 import org.slf4j.LoggerFactory
@@ -27,7 +21,7 @@ class MBeanCollector(val connector: MBeanConnector) {
         val mbeans = queryObjects(objectName)
         val results = mbeans
             .map { mbean -> collectObject(query, mbean.objectName) }
-            .filter { it.attributes.size > 0 }
+            .filter { it.attributes.isNotEmpty() }
 
         log.debug("Collected {} beans for {}", results.size, nameString)
         return results
@@ -48,8 +42,7 @@ class MBeanCollector(val connector: MBeanConnector) {
         val attributes = mutableListOf<MBeanAttribute>()
         queryAttributes(objectName, attributeNames)
             .forEach { attribute ->
-                val valueObject = attribute.value
-                when (valueObject) {
+                when (val valueObject = attribute.value) {
                     is Number -> {
                         attributes.add(Simple(attribute.name, valueObject.toDouble()))
                     }
@@ -73,19 +66,18 @@ class MBeanCollector(val connector: MBeanConnector) {
     }
 
     private fun queryObjects(name: ObjectName): Set<ObjectInstance> =
-        connector.conn().queryMBeans(name, null)
+        connector.queryMBeans(name)
 
     private fun queryAttributes(objectName: ObjectName, names: Set<String>): List<Attribute> {
-        val conn = connector.conn()
-        val availableNames = conn
+        val availableNames = connector
             .getMBeanInfo(objectName)
-            .getAttributes()
-            .filter { it.isReadable() && names.contains(it.name) }
+            .attributes
+            .filter { it.isReadable && names.contains(it.name) }
             .map { it.name }
 
         if (availableNames.isEmpty()) return emptyList()
-        return conn
-            .getAttributes(objectName, availableNames.toTypedArray())
+        return connector
+            .getAttributes(objectName, availableNames)
             .asList()
     }
 }
