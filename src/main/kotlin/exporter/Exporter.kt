@@ -74,7 +74,7 @@ class Exporter : Runnable {
         val connector = try {
             MBeanConnector(host, port)
         } catch (e: MBeanConnectorException) {
-            System.err.println(e.localizedMessage)
+            log.error(e.localizedMessage)
             exitProcess(1)
         }
 
@@ -112,16 +112,23 @@ class Exporter : Runnable {
             }.flatten()
 
         val time = measureTimeMillis {
-            queries.asFlow()
-                .map { query -> collector.collect(query) }
-                .collect { results ->
-                    for (result in results) writeBean(writer, result)
-                }
+            try {
+                queries.asFlow()
+                    .map { query -> collector.collect(query) }
+                    .collect { results ->
+                        for (result in results) writeBean(writer, result)
+                    }
 
-            writer.flush()
+                writer.flush()
+                mbeanCollectionsSeen.inc()
+                mbeanConnectionUp.set(1.0)
+            }
+            catch (e: MBeanConnectorException) {
+                log.error(e.localizedMessage)
+                mbeanConnectionUp.set(0.0)
+            }
         }
 
-        mbeanCollectionsSeen.inc()
         mbeanScrapeDuration.set(time.toDouble() / 1000)
         log.debug("Collection time {}ms", time)
     }
@@ -162,15 +169,19 @@ class Exporter : Runnable {
     }
 
     companion object {
-        val log = LoggerFactory.getLogger(Exporter::class.java)
+        val log = LoggerFactory.getLogger(Exporter::class.java)!!
+        val mbeanConnectionUp = Gauge.build()
+            .name("mbean_up")
+            .help("Whether the mbean connection is up (1) or down (0).")
+            .register()!!
         val mbeanCollectionsSeen = Counter.build()
-          .name("mbean_collections_seen_total")
-          .help("Number of times mbean collections have been seen.")
-          .register()
+            .name("mbean_collections_seen_total")
+            .help("Number of times mbean collections have been seen.")
+            .register()!!
         val mbeanScrapeDuration = Gauge.build()
-          .name("mbean_scrape_duration_seconds")
-          .help("Time this MBean scrape took, in seconds.")
-          .register()
+            .name("mbean_scrape_duration_seconds")
+            .help("Time this MBean scrape took, in seconds.")
+            .register()!!
 
         @JvmStatic
         fun main(args: Array<String>) {
