@@ -1,0 +1,20 @@
+name: Build, package, and push
+on: [push]
+
+jobs:
+  build:
+    name: Gradle
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up JDK
+        uses: actions/setup-java@v1
+        with:
+          java-version: '11.0.7'
+          architecture: x64
+      - name: Build with Gradle
+        run: ./gradlew test shadowjar
+      - uses: actions/upload-artifact@v1
+        with:
+          name: Package
+          path: build/libs/mbean_exporter-all.jar
