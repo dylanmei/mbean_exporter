@@ -1,9 +1,14 @@
 name: Build and test
-on: [push, pull_request]
-
+on:
+  push:
+    branches:
+    - master
+  pull_request:
+    branches:
+    - master
 jobs:
   build:
-    name: Gradle
+    name: Build and test
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
