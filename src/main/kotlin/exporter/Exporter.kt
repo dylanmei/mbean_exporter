@@ -107,7 +107,7 @@ class Exporter : Runnable {
                 domainConfig.beans.map { beanConfig ->
                     val attributesConfig = beanConfig.attributes
                     val attributeNames = attributesConfig.map { it.name }.toSet()
-                    MBeanQuery(beanConfig, domainConfig.name, beanConfig.query, attributeNames)
+                    MBeanQuery(beanConfig, domainConfig.name, beanConfig.pattern, attributeNames)
                 }
             }.flatten()
 
@@ -146,7 +146,7 @@ class Exporter : Runnable {
         val beanConfig = bean.query.context as BeanConfig
         val attributeConfig = beanConfig.attributes.find {
             it.name == attribute.name
-        } ?: throw RuntimeException("Unknown attribute ${bean.domain}${beanConfig.query} ${attribute.name}")
+        } ?: throw RuntimeException("Unknown attribute ${bean.domain}${beanConfig.pattern} ${attribute.name}")
 
         val vars = Vars(bean.domain, bean.keyProperties, attribute.name)
         writer.write(beanConfig, vars, attributeConfig.type, attribute.value)
@@ -156,7 +156,7 @@ class Exporter : Runnable {
         val beanConfig = bean.query.context as BeanConfig
         val attributeConfig = beanConfig.attributes.find {
             it.name == attribute.name
-        } ?: throw RuntimeException("Unknown attribute ${bean.domain}:${beanConfig.query} ${attribute.name}")
+        } ?: throw RuntimeException("Unknown attribute ${bean.domain}:${beanConfig.pattern} ${attribute.name}")
 
         attributeConfig.items.forEach { itemConfig ->
             attribute.items.find { item ->

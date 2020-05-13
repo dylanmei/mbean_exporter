@@ -29,7 +29,7 @@ data class DomainConfig(
 
 @Serializable
 data class BeanConfig(
-    val query: String,
+    val pattern: String,
     val attributes: AttributesConfig,
     val metric: String? = null,
     val labels: LabelsConfig? = null
@@ -44,12 +44,9 @@ data class BeanConfig(
 class AttributesConfig(
     val attributes: Set<AttributeConfig>
 ) : HashSet<AttributeConfig>(attributes) {
-    val names: Set<String>
-        get() = attributes.map { it.name }.toSet()
-
     @Serializer(forClass=AttributesConfig::class)
     companion object : KSerializer<AttributesConfig> {
-        val innerSerializer = SetSerializer(MapEntrySerializer<String, String>(String.serializer(), String.serializer()))
+        val innerSerializer = SetSerializer(MapEntrySerializer(String.serializer(), String.serializer()))
 
         @ImplicitReflectionSerializer
         override val descriptor: SerialDescriptor

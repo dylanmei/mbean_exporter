@@ -23,7 +23,7 @@ You can be doing this ヾ(＠⌒ー⌒＠)ノ
 domains:
 - name: kafka.log
   beans:
-  - query: "type=Log,name=Size,topic=*,partition=*"
+  - pattern: "type=Log,name=Size,topic=*,partition=*"
     attributes:
     - Value: gauge
     metric: "kafka_log_partition_size"
@@ -32,7 +32,7 @@ domains:
       partition: "${keyprop partition}"
 - name: kafka.server
   beans:
-  - query: "type=KafkaRequestHandlerPool,name=RequestHandlerAvgIdlePercent"
+  - pattern: "type=KafkaRequestHandlerPool,name=RequestHandlerAvgIdlePercent"
     attributes:
     - OneMinuteRate: gauge
     metric: "kafka_broker_${keyprop name | snake}"
