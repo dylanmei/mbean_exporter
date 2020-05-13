@@ -28,7 +28,7 @@ class ConfigParserTest : ShouldSpec() {
             domains:
             - name: foo
               beans:
-              - query: type=bar
+              - pattern: type=bar
                 attributes:
                 - Value: counter
                 metric: foo_bar_total
@@ -43,7 +43,7 @@ class ConfigParserTest : ShouldSpec() {
                 beans shouldHaveSize(1)
 
                 with (beans.first()) {
-                    query shouldBe("type=bar")
+                    pattern shouldBe("type=bar")
                     metric shouldBe("foo_bar_total")
 
                     labels shouldNotBe(null)
@@ -63,7 +63,7 @@ class ConfigParserTest : ShouldSpec() {
             domains:
             - name: foo
               beans:
-              - query: type=bar
+              - pattern: type=bar
                 attributes:
                 - Value.item1: gauge
                 - Value.item2: counter
@@ -101,7 +101,7 @@ class ConfigParserTest : ShouldSpec() {
             domains:
             - name: foo
               beans:
-              - query: type=bar
+              - pattern: type=bar
                 attributes:
                 - Value
                 metric: foo_bar_total

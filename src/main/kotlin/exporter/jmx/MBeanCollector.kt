@@ -4,12 +4,13 @@ import javax.management.Attribute
 import javax.management.ObjectInstance
 import javax.management.ObjectName
 import javax.management.openmbean.CompositeData
+import javax.management.InstanceNotFoundException
 
 import org.slf4j.LoggerFactory
 
 class MBeanCollector(val connector: MBeanConnector) {
     companion object {
-        val log = LoggerFactory.getLogger(MBeanCollector::class.java)
+        val log = LoggerFactory.getLogger(MBeanCollector::class.java)!!
     }
 
     fun collect(query: MBeanQuery): List<MBean> {
@@ -69,11 +70,15 @@ class MBeanCollector(val connector: MBeanConnector) {
         connector.queryMBeans(name)
 
     private fun queryAttributes(objectName: ObjectName, names: Set<String>): List<Attribute> {
-        val availableNames = connector
-            .getMBeanInfo(objectName)
-            .attributes
-            .filter { it.isReadable && names.contains(it.name) }
-            .map { it.name }
+        val availableNames = try {
+            connector
+                .getMBeanInfo(objectName)
+                .attributes
+                .filter { it.isReadable && names.contains(it.name) }
+                .map { it.name }
+        } catch (e: InstanceNotFoundException) {
+            emptyList<String>()
+        }
 
         if (availableNames.isEmpty()) return emptyList()
         return connector
