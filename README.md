@@ -5,7 +5,9 @@ A Prometheus exporter for JMX managed-beans. Similar to [prometheus/jmx_exporter
 
 ---
 
-About exporters, [Prometheus documentation](https://prometheus.io/docs/instrumenting/writing_exporters/#maintainability-and-purity) states:
+![Build and test](https://github.com/dylanmei/mbean_exporter/workflows/Build%20and%20test/badge.svg) ![Docker Pulls](https://img.shields.io/docker/pulls/dylanmei/mbean_exporter)
+
+About exporters, the [Prometheus documentation](https://prometheus.io/docs/instrumenting/writing_exporters/#maintainability-and-purity) states:
 
 >The main decision you need to make when writing an exporter is how much work you’re willing to put in to get perfect metrics out of it.
 
