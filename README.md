@@ -5,39 +5,48 @@ A Prometheus exporter for JMX managed-beans. Similar to [prometheus/jmx_exporter
 
 ---
 
-Rather than doing this (ノಠ益ಠ)ノ彡┻━┻
+About exporters, [Prometheus documentation](https://prometheus.io/docs/instrumenting/writing_exporters/#maintainability-and-purity) states:
 
+>The main decision you need to make when writing an exporter is how much work you’re willing to put in to get perfect metrics out of it.
+
+Setting up `mbean_exporter` configurations requires a significant amount of configuration work, but its text-template pipelines offers a satisfying level of control over metric naming.
+
+Rather than doing this (ノಠ益ಠ)ノ彡┻━┻
 ```
 rules:
-- pattern: kafka.(\w+)<type=(.+), name=(.+), (.+)=(.+), (.+)=(.+)><>Value
+- pattern: kafka.(\w+)<type=(.+), name=(.+), (.+)=(.+)><>Count
+  name: kafka_$1_$2_$3_total
+  type: COUNTER
+  labels:
+    "$4": "$5"
+- pattern: kafka.(\w+)<type=(.+), name=(.+), (.+)=(.*)><>(\d+)thPercentile
   name: kafka_$1_$2_$3
   type: GAUGE
   labels:
     "$4": "$5"
-    "$6": "$7"
+    quantile: "0.$6"
 ```
 
 You can be doing this ヾ(＠⌒ー⌒＠)ノ
-
 ```
 domains:
-- name: kafka.log
+- name: kafka.network
   beans:
-  - pattern: "type=Log,name=Size,topic=*,partition=*"
-    attributes:
-    - Value: gauge
-    metric: "kafka_log_partition_size"
-    labels:
-      topic: "${keyprop topic | lower}"
-      partition: "${keyprop partition}"
-- name: kafka.server
-  beans:
-  - pattern: "type=KafkaRequestHandlerPool,name=RequestHandlerAvgIdlePercent"
-    attributes:
-    - OneMinuteRate: gauge
-    metric: "kafka_broker_${keyprop name | snake}"
-  - query: "type=BrokerTopicMetrics,name=*"
+  - pattern: "type=RequestMetrics,name=RequestsPerSec,request=*,version=*"
     attributes:
     - Count: counter
-    metric: "kafka_topics_${keyprop name | replace PerSec | replace Total | snake}_${attribute | replace Count total}"
+    metric: "kafka_api_requests_total"
+    labels:
+      request: "${keyprop request}"
+      version: "${keyprop version}"
+  - pattern: "type=RequestMetrics,name=*TimeMs,request=*"
+    attributes:
+    - 50thPercentile: gauge
+    - 95thPercentile: gauge
+    - 99thPercentile: gauge
+    - 999thPercentile: gauge
+    metric: "kafka_api_${keyprop name | snake}"
+    labels:
+      request: "${keyprop request}"
+      quantile: "0.${attribute | replace thPercentile}"
 ```
