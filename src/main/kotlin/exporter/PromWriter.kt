@@ -1,15 +1,13 @@
 package exporter
 
-import exporter.jmx.*
+import exporter.config.*
 import exporter.text.Vars
 
 import io.prometheus.client.Collector
 import io.prometheus.client.CollectorRegistry
-import io.prometheus.client.Counter
 import io.prometheus.client.exporter.HTTPServer
 import io.prometheus.client.Collector.MetricFamilySamples.Sample as Sample
 
-import java.io.Closeable
 import java.net.InetSocketAddress
 
 import org.slf4j.LoggerFactory

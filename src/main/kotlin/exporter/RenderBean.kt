@@ -1,8 +1,7 @@
 package exporter
 
+import exporter.config.BeanConfig
 import exporter.text.Vars
-
-import com.glispa.combo.Template
 
 fun BeanConfig.renderMetric(vars: Vars): String =
     template

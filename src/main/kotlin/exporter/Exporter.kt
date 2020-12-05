@@ -1,6 +1,7 @@
 package exporter
 
 import exporter.jmx.*
+import exporter.config.*
 import exporter.text.Vars
 
 import io.prometheus.client.Counter
@@ -185,9 +186,9 @@ class Exporter : Runnable {
 
         @JvmStatic
         fun main(args: Array<String>) {
-            var commandLine = CommandLine(Exporter())
+            val commandLine = CommandLine(Exporter())
             commandLine.registerConverter(Config::class.java, ConfigConverter())
-            commandLine.setCaseInsensitiveEnumValuesAllowed(true)
+            commandLine.isCaseInsensitiveEnumValuesAllowed = true
             commandLine.execute(*args)
         }
 

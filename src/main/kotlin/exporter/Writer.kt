@@ -1,6 +1,6 @@
 package exporter
 
-import exporter.jmx.*
+import exporter.config.*
 import exporter.text.Vars
 
 import java.io.Closeable
