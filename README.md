@@ -52,3 +52,12 @@ domains:
       request: "${keyprop request}"
       quantile: "0.${attribute | replace thPercentile}"
 ```
+
+## mic check
+
+Use the example `./config.yaml` to print out metrics for a local Kafka broker instance (JMX `localhost:9010`).
+
+```
+docker-compose up
+./gradlew run
+```
