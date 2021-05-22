@@ -36,7 +36,7 @@ class PromWriter(val host: String?, val port: Int) : Collector(), Collector.Desc
         val metricType = when(type) {
             AttributeType.COUNTER -> Collector.Type.COUNTER
             AttributeType.GAUGE -> Collector.Type.GAUGE
-            else -> Collector.Type.UNTYPED
+            else -> Collector.Type.UNKNOWN
         }
 
         val labelNames = beanConfig.labels?.keys ?: emptyList<String>()

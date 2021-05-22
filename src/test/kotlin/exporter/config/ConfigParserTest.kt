@@ -96,7 +96,7 @@ class ConfigParserTest {
 
     @Test
     @Disabled
-    fun `should parse untyped attribute`() {
+    fun `should parse unknown attribute`() {
         val config = ConfigParser().parse("""
         domains:
         - name: foo
@@ -116,7 +116,7 @@ class ConfigParserTest {
 
                 with (attributes.first()) {
                     name shouldBe("Value")
-                    type shouldBe(AttributeType.UNTYPED)
+                    type shouldBe(AttributeType.UNKNOWN)
                 }
             }
         }
