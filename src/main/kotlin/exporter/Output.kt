@@ -11,7 +11,7 @@ class OutputOptionConverter: CommandLine.ITypeConverter<OutputOption> {
     @Throws(Exception::class)
     override fun convert(option: String): OutputOption {
         val selectedOption = OutputOption.values().find {
-            it.option.toLowerCase() == option
+            it.option.lowercase() == option
         }
 
         if (selectedOption != null) {

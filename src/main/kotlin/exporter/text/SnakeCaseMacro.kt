@@ -11,7 +11,7 @@ class SnakeCaseMacro() : Macro<Vars> {
             return str
         }
         if (length == 1) {
-            return str.toLowerCase()
+            return str.lowercase()
         }
 
         val buffer = StringBuilder()
@@ -23,7 +23,7 @@ class SnakeCaseMacro() : Macro<Vars> {
             val next = str[head + 1]
 
             if (curr.isLetter()) {
-                buffer.append(curr.toLowerCase())
+                buffer.append(curr.lowercase())
 
                 if (next.isDigit()) {
                     buffer.append('_')
@@ -55,7 +55,7 @@ class SnakeCaseMacro() : Macro<Vars> {
 
         val curr = str[tail]
         if (!curr.isWhitespace()) {
-            buffer.append(curr.toLowerCase())
+            buffer.append(curr.lowercase())
         }
 
         return buffer.toString()

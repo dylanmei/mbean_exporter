@@ -27,7 +27,7 @@ object AttributesConfigSerializer : KSerializer<AttributesConfig> {
             .forEach { (name, type) ->
                 val segments = name.split(".", limit = 2)
                 if (segments.size == 1) {
-                    configs[name] = mutableListOf(AttributeConfig(name, AttributeType.valueOf(type.toUpperCase())))
+                    configs[name] = mutableListOf(AttributeConfig(name, AttributeType.valueOf(type.uppercase())))
                 } else {
                     val (attrName, itemName) = segments
 
@@ -37,7 +37,7 @@ object AttributesConfigSerializer : KSerializer<AttributesConfig> {
                         configs[attrName] = list
                     }
 
-                    list.add(AttributeConfig(itemName, AttributeType.valueOf(type.toUpperCase())))
+                    list.add(AttributeConfig(itemName, AttributeType.valueOf(type.uppercase())))
                 }
             }
 
