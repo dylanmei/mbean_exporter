@@ -2,22 +2,22 @@ version: "3"
 
 services:
   zookeeper:
-    image: confluentinc/cp-zookeeper:6.1.1
+    image: confluentinc/cp-zookeeper:6.2.0
     environment:
       ZOOKEEPER_CLIENT_PORT: 2181
     ports:
     - 2181:2181
     logging: { driver: none }
 
-  broker:
-    image: confluentinc/cp-kafka:6.1.1
+  kafka-broker:
+    image: confluentinc/cp-kafka:6.2.0
     ports:
     - 9092:9092
     - 9010:9010
     environment:
     - KAFKA_ZOOKEEPER_CONNECT=zookeeper:2181
     - KAFKA_LISTENERS=PUBLIC://0.0.0.0:9092,INTERNAL://0.0.0.0:19092
-    - KAFKA_ADVERTISED_LISTENERS=PUBLIC://localhost:9092,INTERNAL://broker:19092
+    - KAFKA_ADVERTISED_LISTENERS=PUBLIC://localhost:9092,INTERNAL://kafka-broker:19092
     - KAFKA_LISTENER_SECURITY_PROTOCOL_MAP=PUBLIC:PLAINTEXT,INTERNAL:PLAINTEXT
     - KAFKA_INTER_BROKER_LISTENER_NAME=INTERNAL
     - KAFKA_NUM_PARTITIONS=2
@@ -26,9 +26,25 @@ services:
     - KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR=1
     - KAFKA_DELETE_TOPIC_ENABLE=true
     - KAFKA_CONFLUENT_SUPPORT_METRICS_ENABLE=false
-
     - KAFKA_LOG4J_ROOT_LOGLEVEL=INFO
     - KAKFA_JMX_HOST=localhost
     - KAFKA_JMX_PORT=9010
     depends_on: [zookeeper]
-    #logging: { driver: none }
+    logging: { driver: none }
+
+  schema-registry:
+    image: confluentinc/cp-schema-registry:6.2.0
+    hostname: schema-registry
+    ports:
+    - 8000:8000
+    - 9011:9010
+    environment:
+    - SCHEMA_REGISTRY_HOST_NAME=schema-registry
+    - SCHEMA_REGISTRY_LISTENERS=http://0.0.0.0:8000
+    - SCHEMA_REGISTRY_KAFKASTORE_BOOTSTRAP_SERVERS=PLAINTEXT://kafka-broker:19092
+    - SCHEMA_REGISTRY_KAFKASTORE_TOPIC_REPLICATION_FACTOR=1
+    - SCHEMA_REGISTRY_KAFKASTORE_TIMEOUT_MS=15000
+    - SCHEMA_REGISTRY_JMX_HOST=localhost
+    - SCHEMA_REGISTRY_JMX_PORT=9010
+    depends_on: [zookeeper, kafka-broker]
+    logging: { driver: none }

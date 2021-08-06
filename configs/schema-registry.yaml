@@ -1,0 +1,126 @@
+---
+
+domains:
+- name: kafka.schema.registry
+  beans:
+  - pattern: type=jetty-metrics
+    attributes:
+    - connections-active: gauge
+    metric: "schema_registry_active_connections_count"
+  - pattern: type=master-slave-role
+    attributes:
+    - master-slave-role: gauge
+    metric: "schema_registry_master_slave_role"
+
+  # All REST handlers
+  - pattern: type=jersey-metrics
+    attributes:
+    - request-byte-rate: gauge
+    - request-error-rate: gauge
+    - request-latency-avg: gauge
+    - request-rate: gauge
+    - request-size-avg: gauge
+    - response-byte-rate: gauge
+    - response-rate: gauge
+    - response-size-avg: gauge
+    metric: "schema_registry_${attribute | replace size-avg avg-size | replace latency-avg avg-latency | snake}"
+
+  # FIXME: Specific REST handlers
+  - pattern: type=jersey-metrics
+    attributes:
+    - compatibility.subjects.versions.verify.request-rate: gauge
+    - compatibility.subjects.versions.verify.request-error-rate: gauge
+    - metadata.id.versions.verify.request-rate: gauge
+    - metadata.id.versions.verify.request-error-rate: gauge
+    - schemas.get-schemas.request-rate: gauge
+    - schemas.get-schemas.request-error-rate: gauge
+    - schemas.ids.request-rate: gauge
+    - schemas.ids.request-error-rate: gauge
+    - subjects.delete-subject.request-rate: gauge
+    - subjects.delete-subject.request-error-rate: gauge
+    - subjects.get-schema.request-rate: gauge
+    - subjects.get-schema.request-error-rate: gauge
+    - subjects.list.request-rate: gauge
+    - subjects.list.request-error-rate: gauge
+    - subjects.versions.deleteSchemaVersion-schema.request-rate: gauge
+    - subjects.versions.deleteSchemaVersion-schema.request-error-rate: gauge
+    - subjects.versions.get-schema.only.request-rate: gauge
+    - subjects.versions.get-schema.only.request-error-rate: gauge
+    - subjects.versions.list.request-rate: gauge
+    - subjects.versions.list.request-error-rate: gauge
+    - subjects.versions.register.request-rate: gauge
+    - subjects.versions.register.request-error-rate: gauge
+    metric: "schema_registry_rest_${attribute | rightof . | snake}"
+    labels:
+      resource: "${attribute | leftof .}"
+
+- name: kafka.producer
+  beans:
+  - pattern: type=producer-metrics,client-id=*
+    attributes:
+    - connection-count: gauge
+    - request-latency-avg: gauge
+    - request-rate: gauge
+    - response-rate: gauge
+    - incoming-byte-rate: gauge
+    - outgoing-byte-rate: gauge
+    - io-ratio: gauge
+    - io-time-ns-avg: gauge
+    - io-wait-ratio: gauge
+    - io-wait-time-ns-avg: gauge
+    - select-rate: gauge
+    metric: "kafka_producer_${attribute | replace latency-avg avg-latency | replace ns-avg avg-ns | snake}"
+    labels:
+      client_id: "${keyprop client-id}"
+  - pattern: type=producer-topic-metrics,client-id=*,topic=*
+    attributes:
+    - byte-rate: gauge
+    - record-send-rate: gauge
+    - record-retry-rate: gauge
+    - record-error-rate: gauge
+    metric: "kafka_producer_topic_${attribute | snake}"
+    labels:
+      topic: "${keyprop topic}"
+      client_id: "${keyprop client-id}"
+
+- name: kafka.consumer
+  beans:
+  - pattern: type=consumer-metrics,client-id=*
+    attributes:
+    - connection-count: gauge
+    - request-latency-avg: gauge
+    - request-rate: gauge
+    - response-rate: gauge
+    - incoming-byte-rate: gauge
+    - outgoing-byte-rate: gauge
+    - io-ratio: gauge
+    - io-time-ns-avg: gauge
+    - io-wait-ratio: gauge
+    - io-wait-time-ns-avg: gauge
+    - select-rate: gauge
+    metric: "kafka_consumer_${attribute | replace latency-avg avg-latency | replace ns-avg avg-ns | snake}"
+    labels:
+      client_id: "${keyprop client-id}"
+  - pattern: type=consumer-fetch-manager-metrics,client-id=*
+    attributes:
+    - bytes-consumed-rate: gauge
+    - fetch-size-avg: gauge
+    - fetch-rate: gauge
+    - fetch-latency-avg: gauge
+    - fetch-throttle-time-avg: gauge
+    - records-consumed-rate: gauge
+    - records-per-request-avg: gauge
+    - records-lag-max: gauge
+    metric: "kafka_consumer_${attribute | replace size-avg avg-size | replace latency-avg avg-latency | replace throttle-time-avg avg-throttle-time | replace per-request-avg avg-per-request | replace lag-max max-lag | snake}"
+    labels:
+      client_id: "${keyprop client-id}"
+  - pattern: type=consumer-fetch-manager-metrics,client-id=*,topic=*
+    attributes:
+    - bytes-consumed-rate: gauge
+    - fetch-size-avg: gauge
+    - records-consumed-rate: gauge
+    metric: "kafka_consumer_topic_${attribute | replace size-avg avg-size | snake}"
+    labels:
+      topic: "${keyprop topic}"
+      client_id: "${keyprop client-id}"
+

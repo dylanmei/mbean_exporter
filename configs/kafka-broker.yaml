@@ -1,0 +1,115 @@
+---
+
+domains:
+- name: kafka.controller
+  beans:
+  - pattern: "type=KafkaController,name=*"
+    attributes:
+    - Value: gauge
+    metric: "${domain}_${keyprop name | snake}"
+  - pattern: "type=ControllerStats,name=*"
+    attributes:
+    - Count: counter
+    metric: "${domain}_${keyprop name | replace RateAndTimeMs | replace PerSec | snake}_${attribute | replace Count total}"
+- name: kafka.coordinator.group
+  beans:
+  - pattern: "type=GroupMetadataManager,name=*"
+    attributes:
+    - Value: gauge
+    metric: "kafka_group_coordinator_${keyprop name | snake}"
+- name: kafka.log
+  beans:
+  - pattern: "type=LogFlushStats,name=LogFlushRateAndTimeMs"
+    attributes:
+    - Count: counter
+    - Mean: gauge
+    metric: "kafka_log_flush_${attribute | replace Count total | replace Mean avg_time}"
+  - pattern: "type=Log,name=Size,topic=*,partition=*"
+    attributes:
+    - Value: gauge
+    metric: "kafka_log_partition_size"
+    labels:
+      topic: "${keyprop topic}"
+      partition: "${keyprop partition}"
+- name: kafka.network
+  beans:
+  - pattern: "type=Processor,name=*,networkProcessor=*"
+    attributes:
+    - Value: gauge
+    metric: "kafka_broker_network_processor_${keyprop name | snake}"
+    labels:
+      network_processor: "${keyprop networkProcessor}"
+  - pattern: "type=SocketServer,name=NetworkProcessorAvgIdlePercent"
+    attributes:
+    - Value: gauge
+    metric: "kafka_broker_${keyprop name | snake}"
+  - pattern: "type=RequestChannel,name=*"
+    attributes:
+    - Value: gauge
+    metric: "kafka_broker_${keyprop name | snake}"
+  - pattern: "type=RequestMetrics,name=RequestsPerSec,request=*,version=*"
+    attributes:
+    - Count: counter
+    metric: "kafka_broker_api_requests_total"
+    labels:
+      request: "${keyprop request}"
+      version: "${keyprop version}"
+  - pattern: "type=RequestMetrics,name=*TimeMs,request=*"
+    attributes:
+    - 50thPercentile: gauge
+    - 95thPercentile: gauge
+    - 99thPercentile: gauge
+    - 999thPercentile: gauge
+    metric: "kafka_broker_api_${keyprop name | snake}"
+    labels:
+      request: "${keyprop request}"
+      p: "${attribute | replace thPercentile}"
+- name: kafka.server
+  beans:
+  - pattern: "type=KafkaRequestHandlerPool,name=RequestHandlerAvgIdlePercent"
+    attributes:
+    - OneMinuteRate: gauge
+    metric: "kafka_broker_${keyprop name | snake}"
+  - pattern: "type=BrokerTopicMetrics,name=*"
+    attributes:
+    - Count: counter
+    metric: "kafka_topics_${keyprop name | replace PerSec | replace Total | snake}_${attribute | replace Count total}"
+  - pattern: "type=BrokerTopicMetrics,name=*,topic=*"
+    attributes:
+    - Count: counter
+    metric: "kafka_topic_${keyprop name | replace PerSec | replace Total | snake}_${attribute | replace Count total}"
+    labels:
+      topic: "${keyprop topic}"
+  - pattern: "type=ReplicaManager,name=*Count"
+    attributes:
+    - Value: gauge
+    metric: "kafka_broker_${keyprop name | snake}"
+  - pattern: "type=ReplicaManager,name=UnderReplicatedPartitions"
+    attributes:
+    - Value: gauge
+    metric: "kafka_broker_under_replicated_partition_count"
+  - pattern: "type=ReplicaManager,name=*PerSec"
+    attributes:
+    - Count: counter
+    metric: "kafka_broker_${keyprop name | replace PerSec | snake}_${attribute | replace Count total}"
+  - pattern: "type=socket-server-metrics,*"
+    attributes:
+    - connection-creation-total: counter
+    - connection-close-total: counter
+    - failed-authentication-total: counter
+    - failed-reauthentication-total: counter
+    - incoming-byte-total: counter
+    - iotime-total: counter
+    - io-waittime-total: counter
+    - network-io-total: counter
+    - outgoing-byte-total: counter
+    - request-total: counter
+    - response-total: counter
+    - select-total: counter
+    - successful-authentication-total: counter
+    - successful-reauthentication-total: counter
+    metric: "kafka_broker_${attribute | snake}"
+    labels:
+      listener: "${keyprop listener | lower}"
+      network_processor: "${keyprop networkProcessor}"
+

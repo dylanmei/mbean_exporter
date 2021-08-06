@@ -55,9 +55,27 @@ domains:
 
 ## mic check
 
-Use the example `./config.yaml` to print out metrics for a local Kafka broker instance (JMX `localhost:9010`).
+Run a simple Apache Kafka and Schema Registry setup:
 
 ```
 docker-compose up
+```
+
+Use the example `./config.yaml` to print out Java metrics for a local Kafka broker instance:
+
+```
 ./gradlew run
+```
+
+Specify an alternate configuration:
+
+```
+./gradlew run --args="--jmx.port=9010 -f configs/kafka-broker.yaml"
+./gradlew run --args="--jmx.port=9011 -f configs/schema-registry.yaml"
+```
+
+Print all options:
+
+```
+./gradlew run --args="--help"
 ```
