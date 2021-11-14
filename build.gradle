@@ -1,22 +1,18 @@
 plugins {
-    // Apply the Kotlin JVM plugin to add support for Kotlin.
-    id 'org.jetbrains.kotlin.jvm' version "$kotlinVersion"
-    id 'org.jetbrains.kotlin.plugin.serialization' version "$kotlinVersion"
-
-    // Apply the application plugin to add support for building a CLI application.
     id 'application'
-
-    id 'com.adarshr.test-logger' version '2.0.0'
-    id 'com.github.johnrengelman.shadow' version '5.2.0'
+    id 'org.jetbrains.kotlin.jvm'
+    id 'org.jetbrains.kotlin.plugin.serialization'
+    id 'com.github.johnrengelman.shadow'
+    id 'com.adarshr.test-logger'
 }
 
 application {
     mainClassName = 'exporter.Exporter'
 }
-
-repositories {
-    jcenter()
-    maven { url 'https://plugins.gradle.org/m2/' }
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(11)
+    }
 }
 
 dependencies {
@@ -28,7 +24,7 @@ dependencies {
     implementation "io.prometheus:simpleclient_httpserver:$prometheusVersion"
     implementation 'com.glispa.combo:combo-core:1.4.1'
 
-    implementation "info.picocli:picocli:$cliVersion"
+    implementation "info.picocli:picocli:$picocliVersion"
     implementation "com.charleskorn.kaml:kaml:$kamlVersion"
 
     implementation 'log4j:log4j:1.2.17'
@@ -41,7 +37,6 @@ dependencies {
 
 tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).all {
     kotlinOptions {
-        jvmTarget = "11"
         freeCompilerArgs += [
           '-Xopt-in=kotlin.RequiresOptIn',
           '-Xopt-in=kotlinx.serialization.ExperimentalSerializationApi',
