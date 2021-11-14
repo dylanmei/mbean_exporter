@@ -4,6 +4,7 @@ plugins {
     id 'org.jetbrains.kotlin.plugin.serialization'
     id 'com.github.johnrengelman.shadow'
     id 'com.adarshr.test-logger'
+    id 'org.jmailen.kotlinter'
 }
 
 application {

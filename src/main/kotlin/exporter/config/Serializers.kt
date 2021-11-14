@@ -11,7 +11,9 @@ import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
 
 object AttributesConfigSerializer : KSerializer<AttributesConfig> {
-    val innerSerializer = SetSerializer(MapEntrySerializer(String.serializer(), String.serializer()))
+    val innerSerializer = SetSerializer(
+        MapEntrySerializer(String.serializer(), String.serializer())
+    )
 
     @OptIn(InternalSerializationApi::class)
     override val descriptor: SerialDescriptor =
@@ -19,7 +21,8 @@ object AttributesConfigSerializer : KSerializer<AttributesConfig> {
             element<Map.Entry<String, String>>("attributes")
         }
 
-    override fun serialize(encoder: Encoder, value: AttributesConfig) = throw UnsupportedOperationException()
+    override fun serialize(encoder: Encoder, value: AttributesConfig) =
+        throw UnsupportedOperationException()
 
     override fun deserialize(decoder: Decoder): AttributesConfig {
         val configs = HashMap<String, MutableList<AttributeConfig>>()
@@ -27,7 +30,9 @@ object AttributesConfigSerializer : KSerializer<AttributesConfig> {
             .forEach { (name, type) ->
                 val segments = name.split(".", limit = 2)
                 if (segments.size == 1) {
-                    configs[name] = mutableListOf(AttributeConfig(name, AttributeType.valueOf(type.uppercase())))
+                    configs[name] = mutableListOf(
+                        AttributeConfig(name, AttributeType.valueOf(type.uppercase()))
+                    )
                 } else {
                     val (attrName, itemName) = segments
 
@@ -48,7 +53,8 @@ object AttributesConfigSerializer : KSerializer<AttributesConfig> {
                 } else {
                     AttributeConfig(name, AttributeType.COMPOSITE, items.toSet())
                 }
-            }.toSet())
+            }.toSet()
+        )
     }
 }
 
@@ -61,7 +67,8 @@ object LabelsConfigSerializer : KSerializer<LabelsConfig> {
             element<Map<String, String>>("labels")
         }
 
-    override fun serialize(encoder: Encoder, value: LabelsConfig) = throw UnsupportedOperationException()
+    override fun serialize(encoder: Encoder, value: LabelsConfig) =
+        throw UnsupportedOperationException()
 
     override fun deserialize(decoder: Decoder): LabelsConfig {
         val encodedMap = innerSerializer.deserialize(decoder)

@@ -1,0 +1,12 @@
+[*]
+charset = utf-8
+end_of_line = lf
+trim_trailing_whitespace = true
+insert_final_newline = true
+
+[*.{kt,kts}]
+max_line_length = 100
+disabled_rules=no-wildcard-imports,filename
+
+[**/test/**.kt]
+ktlint_ignore_back_ticked_identifier=true

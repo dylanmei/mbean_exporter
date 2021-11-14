@@ -1,12 +1,11 @@
 package exporter.jmx
 
+import org.slf4j.LoggerFactory
 import javax.management.Attribute
+import javax.management.InstanceNotFoundException
 import javax.management.ObjectInstance
 import javax.management.ObjectName
 import javax.management.openmbean.CompositeData
-import javax.management.InstanceNotFoundException
-
-import org.slf4j.LoggerFactory
 
 class MBeanCollector(val connector: MBeanConnector) {
     companion object {
@@ -34,10 +33,14 @@ class MBeanCollector(val connector: MBeanConnector) {
         return MBean(
             query,
             objectName.keyPropertyList.toMap(),
-            collectAttributes(objectName, query.attributes))
+            collectAttributes(objectName, query.attributes)
+        )
     }
 
-    private fun collectAttributes(objectName: ObjectName, attributeNames: Set<String>): List<MBeanAttribute> {
+    private fun collectAttributes(
+        objectName: ObjectName,
+        attributeNames: Set<String>
+    ): List<MBeanAttribute> {
         log.debug("Collecting attributes for {}", objectName)
 
         val attributes = mutableListOf<MBeanAttribute>()

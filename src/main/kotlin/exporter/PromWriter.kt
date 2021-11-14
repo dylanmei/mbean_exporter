@@ -1,16 +1,14 @@
 package exporter
 
-import exporter.config.*
+import exporter.config.AttributeType
+import exporter.config.BeanConfig
 import exporter.text.Vars
-
 import io.prometheus.client.Collector
 import io.prometheus.client.CollectorRegistry
 import io.prometheus.client.exporter.HTTPServer
-import io.prometheus.client.Collector.MetricFamilySamples.Sample as Sample
-
-import java.net.InetSocketAddress
-
 import org.slf4j.LoggerFactory
+import java.net.InetSocketAddress
+import io.prometheus.client.Collector.MetricFamilySamples.Sample as Sample
 
 class PromWriter(val host: String?, val port: Int) : Collector(), Collector.Describable, Writer {
     companion object {
@@ -33,7 +31,7 @@ class PromWriter(val host: String?, val port: Int) : Collector(), Collector.Desc
             .render(vars)
             .replace('.', '_')
 
-        val metricType = when(type) {
+        val metricType = when (type) {
             AttributeType.COUNTER -> Collector.Type.COUNTER
             AttributeType.GAUGE -> Collector.Type.GAUGE
             else -> Collector.Type.UNKNOWN
@@ -42,7 +40,11 @@ class PromWriter(val host: String?, val port: Int) : Collector(), Collector.Desc
         val labelNames = beanConfig.labels?.keys ?: emptyList<String>()
         val labelValues = labelNames.map { beanConfig.renderLabel(it, vars) }
 
-        writeSample(Sample(metricString, labelNames.toList(), labelValues, value), metricType, helpString)
+        writeSample(
+            Sample(metricString, labelNames.toList(), labelValues, value),
+            metricType,
+            helpString
+        )
     }
 
     fun writeSample(sample: Sample, type: Type, help: String) {
@@ -54,7 +56,7 @@ class PromWriter(val host: String?, val port: Int) : Collector(), Collector.Desc
             mutableSamples.put(sample.name, mfs)
         }
 
-        mfs.samples.add(sample);
+        mfs.samples.add(sample)
     }
 
     override fun flush() {
@@ -63,7 +65,7 @@ class PromWriter(val host: String?, val port: Int) : Collector(), Collector.Desc
     }
 
     override fun close() {
-        server.stop()
+        server.close()
     }
 
     override fun collect(): List<Collector.MetricFamilySamples> {

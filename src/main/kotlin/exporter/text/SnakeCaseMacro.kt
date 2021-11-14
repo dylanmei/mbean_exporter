@@ -1,7 +1,6 @@
 package exporter.text
 
 import com.glispa.combo.Macro
-
 import kotlin.text.StringBuilder
 
 class SnakeCaseMacro() : Macro<Vars> {
@@ -39,7 +38,7 @@ class SnakeCaseMacro() : Macro<Vars> {
                         buffer.append('_')
                     }
                 }
-            } else if (curr.isDigit()){
+            } else if (curr.isDigit()) {
                 buffer.append(curr)
                 if (next.isLetter()) {
                     buffer.append('_')

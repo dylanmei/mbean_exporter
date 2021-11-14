@@ -18,4 +18,4 @@ jobs:
           java-version: '11.0.7'
           architecture: x64
       - name: Build with Gradle
-        run: ./gradlew test
+        run: ./gradlew check

@@ -7,7 +7,7 @@ enum class OutputOption(val option: String) {
     STDOUT("stdout");
 }
 
-class OutputOptionConverter: CommandLine.ITypeConverter<OutputOption> {
+class OutputOptionConverter : CommandLine.ITypeConverter<OutputOption> {
     @Throws(Exception::class)
     override fun convert(option: String): OutputOption {
         val selectedOption = OutputOption.values().find {

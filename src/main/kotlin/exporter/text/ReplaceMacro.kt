@@ -10,4 +10,3 @@ class ReplaceMacro(val args: Array<String>) : Macro<Vars> {
         return str.replace(regex, substitution)
     }
 }
-

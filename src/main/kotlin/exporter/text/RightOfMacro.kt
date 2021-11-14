@@ -3,7 +3,7 @@ package exporter.text
 import com.glispa.combo.Macro
 
 class RightOfMacro(val pattern: String) : Macro<Vars> {
-    val regex = when(pattern) {
+    val regex = when (pattern) {
         "" -> Regex("\\s+")
         "." -> Regex("\\.+")
         else -> Regex(pattern)
@@ -13,6 +13,3 @@ class RightOfMacro(val pattern: String) : Macro<Vars> {
         return str.split(regex).last()
     }
 }
-
-
-

@@ -1,62 +1,73 @@
 package exporter
 
-import exporter.jmx.*
-import exporter.config.*
+import exporter.config.BeanConfig
+import exporter.config.Config
+import exporter.config.ConfigConverter
+import exporter.jmx.Composite
+import exporter.jmx.MBean
+import exporter.jmx.MBeanCollector
+import exporter.jmx.MBeanConnector
+import exporter.jmx.MBeanConnectorException
+import exporter.jmx.MBeanQuery
+import exporter.jmx.Simple
 import exporter.text.Vars
-
 import io.prometheus.client.Counter
 import io.prometheus.client.Gauge
-
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.*
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.selects.select
-import kotlin.system.measureTimeMillis
-
+import org.slf4j.LoggerFactory
+import picocli.CommandLine
 import sun.misc.Signal
 import sun.misc.SignalHandler
-
-import picocli.CommandLine
-import org.slf4j.LoggerFactory
 import kotlin.system.exitProcess
+import kotlin.system.measureTimeMillis
 
 @CommandLine.Command(name = "mbean_exporter")
 class Exporter : Runnable {
     @CommandLine.Option(
         names = ["--jmx.host"],
-        description = ["JMX Host name to export metrics from"])
+        description = ["JMX Host name to export metrics from"]
+    )
     var host: String = "localhost"
 
     @CommandLine.Option(
         names = ["--jmx.port"],
-        description = ["JMX Host port to export metrics from"])
+        description = ["JMX Host port to export metrics from"]
+    )
     var port: Int = 9010
 
     @CommandLine.Option(
         names = ["--http.host"],
-        description = ["HTTP Host name to bind the output to"])
+        description = ["HTTP Host name to bind the output to"]
+    )
     var httpHost: String? = null
 
     @CommandLine.Option(
         names = ["--http.port"],
-        description = ["HTTP Host port to bind the output to"])
+        description = ["HTTP Host port to bind the output to"]
+    )
     var httpPort: Int = 1234
 
     @CommandLine.Option(
         names = ["--repeat.ms"],
-        description = ["Duration between iterations; otherwise run once and exit"])
+        description = ["Duration between iterations; otherwise run once and exit"]
+    )
     var repeatDelay: Long = 0
 
     @CommandLine.Option(
         names = ["-f", "--config.path"],
         defaultValue = "config.yaml",
-        description = ["Query configuration path"])
+        description = ["Query configuration path"]
+    )
     lateinit var config: Config
 
     @CommandLine.Option(
         names = ["-o", "--output"],
         defaultValue = "stdout",
-        description = ["Export query results to 'stdout' or 'http'"])
+        description = ["Export query results to 'stdout' or 'http'"]
+    )
     lateinit var output: OutputOption
 
     override fun run() {
@@ -123,8 +134,7 @@ class Exporter : Runnable {
                 writer.flush()
                 mbeanCollectionsSeen.inc()
                 mbeanConnectionUp.set(1.0)
-            }
-            catch (e: MBeanConnectorException) {
+            } catch (e: MBeanConnectorException) {
                 log.error(e.localizedMessage)
                 mbeanConnectionUp.set(0.0)
             }
@@ -147,7 +157,9 @@ class Exporter : Runnable {
         val beanConfig = bean.query.context as BeanConfig
         val attributeConfig = beanConfig.attributes.find {
             it.name == attribute.name
-        } ?: throw RuntimeException("Unknown attribute ${bean.domain}${beanConfig.pattern} ${attribute.name}")
+        } ?: throw RuntimeException(
+            "Unknown attribute ${bean.domain}${beanConfig.pattern} ${attribute.name}"
+        )
 
         val vars = Vars(bean.domain, bean.keyProperties, attribute.name)
         writer.write(beanConfig, vars, attributeConfig.type, attribute.value)
@@ -157,7 +169,9 @@ class Exporter : Runnable {
         val beanConfig = bean.query.context as BeanConfig
         val attributeConfig = beanConfig.attributes.find {
             it.name == attribute.name
-        } ?: throw RuntimeException("Unknown attribute ${bean.domain}:${beanConfig.pattern} ${attribute.name}")
+        } ?: throw RuntimeException(
+            "Unknown attribute ${bean.domain}:${beanConfig.pattern} ${attribute.name}"
+        )
 
         attributeConfig.items.forEach { itemConfig ->
             attribute.items.find { item ->
@@ -195,13 +209,16 @@ class Exporter : Runnable {
         fun trapSignal(signal: String): ReceiveChannel<Unit> {
             val cancelChannel = Channel<Unit>()
 
-            Signal.handle(Signal(signal), object: SignalHandler {
-                override fun handle(sig: Signal) {
-                    GlobalScope.launch {
-                        cancelChannel.send(Unit)
+            Signal.handle(
+                Signal(signal),
+                object : SignalHandler {
+                    override fun handle(sig: Signal) {
+                        GlobalScope.launch {
+                            cancelChannel.send(Unit)
+                        }
                     }
                 }
-            })
+            )
 
             return cancelChannel
         }

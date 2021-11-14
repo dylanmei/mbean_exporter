@@ -27,8 +27,8 @@ data class BeanConfig(
 ) {
     @Transient
     var template: Template<Vars> = metric?.let {
-            Template(VarMacroRegistry, metric)
-        } ?: Template(VarMacroRegistry, "mbean")
+        Template(VarMacroRegistry, metric)
+    } ?: Template(VarMacroRegistry, "mbean")
 }
 
 @Serializable(with = AttributesConfigSerializer::class)
@@ -37,7 +37,11 @@ class AttributesConfig(
 ) : HashSet<AttributeConfig>(attributes)
 
 @Serializable
-data class AttributeConfig(val name: String, val type: AttributeType, val items: Set<AttributeConfig> = emptySet())
+data class AttributeConfig(
+    val name: String,
+    val type: AttributeType,
+    val items: Set<AttributeConfig> = emptySet()
+)
 
 @Serializable
 enum class AttributeType {

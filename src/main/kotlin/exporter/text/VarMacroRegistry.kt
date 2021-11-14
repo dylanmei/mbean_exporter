@@ -2,7 +2,7 @@ package exporter.text
 
 import com.glispa.combo.MacroRegistry
 
-object VarMacroRegistry: MacroRegistry<Vars>() {
+object VarMacroRegistry : MacroRegistry<Vars>() {
     init {
         register("domain", { _ -> DomainVarMacro() })
         register("keyprop", { args -> KeyPropVarMacro(args.first()) })
@@ -16,4 +16,3 @@ object VarMacroRegistry: MacroRegistry<Vars>() {
         register("rightof", { args -> RightOfMacro(args.firstOrNull() ?: "") })
     }
 }
-

@@ -1,13 +1,11 @@
 package exporter.jmx
 
+import org.slf4j.LoggerFactory
+import java.io.IOException
+import javax.management.*
 import javax.management.remote.JMXConnector
 import javax.management.remote.JMXConnectorFactory
 import javax.management.remote.JMXServiceURL
-
-import javax.management.*
-import java.io.IOException
-
-import org.slf4j.LoggerFactory
 
 class MBeanConnector(
     val host: String,
@@ -24,7 +22,7 @@ class MBeanConnector(
             environment[JMXConnector.CREDENTIALS] = arrayOf(username, password)
         }
 
-        log.debug("Connecting to JMX service at ${host}:${port}")
+        log.debug("Connecting to JMX service at $host:$port")
 
         connected = false
         connector = connect()
@@ -32,8 +30,9 @@ class MBeanConnector(
 
     private fun connect(): JMXConnector = try {
         val conn = JMXConnectorFactory.newJMXConnector(
-            JMXServiceURL("service:jmx:rmi:///jndi/rmi://${host}:${port}/jmxrmi"),
-            environment)
+            JMXServiceURL("service:jmx:rmi:///jndi/rmi://$host:$port/jmxrmi"),
+            environment
+        )
         conn.addConnectionNotificationListener(this, null, null)
         conn.connect()
         conn
@@ -42,12 +41,14 @@ class MBeanConnector(
             is javax.naming.ServiceUnavailableException ->
                 throw MBeanConnectorException(CONNECT_ERR_TEMPLATE.format(host, port), ioe.cause)
             else ->
-                throw MBeanConnectorException("Could not open JMX connector: ${ioe.localizedMessage}", ioe)
+                throw MBeanConnectorException(
+                    "Could not open JMX connector: ${ioe.localizedMessage}", ioe
+                )
         }
     }
 
     private fun reconnect() {
-        log.debug("Reconnecting to JMX service at ${host}:${port}")
+        log.debug("Reconnecting to JMX service at $host:$port")
         connector = connect()
     }
 
@@ -55,12 +56,12 @@ class MBeanConnector(
         when (notification.type) {
             NOTIFICATION_OPENED -> {
                 connected = true
-                log.debug("JMX connection to ${host}:${port} is open")
+                log.debug("JMX connection to $host:$port is open")
             }
             NOTIFICATION_CLOSED -> {
                 connected = false
                 connector.removeConnectionNotificationListener(this)
-                log.debug("JMX connection to ${host}:${port} is closed")
+                log.debug("JMX connection to $host:$port is closed")
             }
         }
     }

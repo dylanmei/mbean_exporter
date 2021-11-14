@@ -7,4 +7,3 @@ class KeyPropsVarMacro() : Macro<Vars> {
         return str + vars.keyPropString
     }
 }
-
