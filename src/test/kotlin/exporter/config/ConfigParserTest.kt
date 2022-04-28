@@ -69,7 +69,7 @@ class ConfigParserTest {
             - Value.item1: gauge
             - Value.item2: counter
             metric: foo_bar_total
-        """.trimMargin()
+            """.trimMargin()
         )
 
         config.domains shouldHaveSize(1)
@@ -109,7 +109,7 @@ class ConfigParserTest {
             attributes:
             - Value
             metric: foo_bar_total
-        """.trimMargin()
+            """.trimMargin()
         )
 
         config.domains shouldHaveSize(1)
