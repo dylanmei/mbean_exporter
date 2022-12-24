@@ -70,6 +70,13 @@ class Exporter : Runnable {
     )
     lateinit var output: OutputOption
 
+    @CommandLine.Option(
+        names = ["-h", "--help"],
+        usageHelp = true,
+        description = ["Show this help message and exit"]
+    )
+    var showUsage: Boolean = false
+
     override fun run() {
         val collector = openCollector()
         val writer = when (output) {
@@ -200,10 +207,17 @@ class Exporter : Runnable {
 
         @JvmStatic
         fun main(args: Array<String>) {
-            val commandLine = CommandLine(Exporter())
-            commandLine.registerConverter(Config::class.java, ConfigConverter())
-            commandLine.isCaseInsensitiveEnumValuesAllowed = true
-            commandLine.execute(*args)
+            val commandLine = CommandLine(Exporter()).apply {
+                isCaseInsensitiveEnumValuesAllowed = true
+                registerConverter(Config::class.java, ConfigConverter())
+                parseArgs(*args)
+            }
+
+            if (commandLine.isUsageHelpRequested()) {
+                commandLine.usage(System.out)
+            } else {
+                commandLine.execute(*args)
+            }
         }
 
         fun trapSignal(signal: String): ReceiveChannel<Unit> {

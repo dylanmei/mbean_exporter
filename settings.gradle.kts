@@ -22,7 +22,7 @@ dependencyResolutionManagement {
             library("kotest.assertions", "io.kotest", "kotest-assertions-core-jvm").version("5.2.3")
             library("kotlinx.coroutines", "org.jetbrains.kotlinx", "kotlinx-coroutines-core").version("1.6.1")
             library("kotlinx.serialization", "org.jetbrains.kotlinx", "kotlinx-serialization-core").version("1.3.2")
-            library("picocli", "info.picocli", "picocli").version("4.6.3")
+            library("picocli", "info.picocli", "picocli").version("4.7.0")
             library("prom.httpserver", "io.prometheus", "simpleclient").version("0.15.0")
             library("prom.simpleclient", "io.prometheus", "simpleclient_httpserver").version("0.15.0")
             library("log4j", "log4j", "log4j").version("1.2.17")
