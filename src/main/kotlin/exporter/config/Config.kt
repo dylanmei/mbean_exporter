@@ -45,9 +45,14 @@ data class AttributeConfig(
 
 @Serializable
 enum class AttributeType {
-    @SerialName("unknown") UNKNOWN,
-    @SerialName("gauge") GAUGE,
-    @SerialName("counter") COUNTER,
+    @SerialName("unknown")
+    UNKNOWN,
+
+    @SerialName("gauge")
+    GAUGE,
+
+    @SerialName("counter")
+    COUNTER,
     COMPOSITE;
 }
 

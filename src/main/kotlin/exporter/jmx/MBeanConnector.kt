@@ -42,7 +42,8 @@ class MBeanConnector(
                 throw MBeanConnectorException(CONNECT_ERR_TEMPLATE.format(host, port), ioe.cause)
             else ->
                 throw MBeanConnectorException(
-                    "Could not open JMX connector: ${ioe.localizedMessage}", ioe
+                    "Could not open JMX connector: ${ioe.localizedMessage}",
+                    ioe
                 )
         }
     }
