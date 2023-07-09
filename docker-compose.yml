@@ -37,7 +37,7 @@ services:
     hostname: schema-registry
     ports:
     - 8000:8000
-    - 9011:9010
+    - 9011:9011
     environment:
     - SCHEMA_REGISTRY_HOST_NAME=schema-registry
     - SCHEMA_REGISTRY_LISTENERS=http://0.0.0.0:8000
@@ -45,6 +45,6 @@ services:
     - SCHEMA_REGISTRY_KAFKASTORE_TOPIC_REPLICATION_FACTOR=1
     - SCHEMA_REGISTRY_KAFKASTORE_TIMEOUT_MS=15000
     - SCHEMA_REGISTRY_JMX_HOST=localhost
-    - SCHEMA_REGISTRY_JMX_PORT=9010
+    - SCHEMA_REGISTRY_JMX_PORT=9011
     depends_on: [zookeeper, kafka-broker]
     logging: { driver: none }

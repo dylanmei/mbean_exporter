@@ -24,6 +24,7 @@ import sun.misc.SignalHandler
 import kotlin.system.exitProcess
 import kotlin.system.measureTimeMillis
 
+@DelicateCoroutinesApi
 @CommandLine.Command(name = "mbean_exporter")
 class Exporter : Runnable {
     @CommandLine.Option(
